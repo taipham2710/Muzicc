@@ -6,34 +6,71 @@ from app.core.auth import get_current_user
 from app.db.session import get_db
 from app.models.song import Song
 from app.models.user import User
+from app.api.schemas.common import PaginatedResponse
 
 router = APIRouter()
 
 
 # Public – ai cũng xem được
-@router.get("", response_model=list[SongResponse])
-def list_public_songs(db: Session = Depends(get_db)):
-    return (
-        db.query(Song)
-        .filter(Song.is_public.is_(True))
+@router.get(
+    "",
+    response_model=PaginatedResponse[SongResponse],
+)
+def list_public_songs(
+    db: Session = Depends(get_db),
+    limit: int = 20,
+    offset: int = 0,
+):
+    query = db.query(Song).filter(Song.is_public.is_(True))
+
+    total = query.count()
+
+    songs = (
+        query
         .order_by(Song.created_at.desc())
+        .limit(limit)
+        .offset(offset)
         .all()
     )
+
+    return {
+        "items": songs,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
 
 # Auth – bài của tôi
 @router.get("/me", response_model=list[SongResponse])
+@router.get(
+    "/me",
+    response_model=PaginatedResponse[SongResponse],
+)
 def list_my_songs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    limit: int = 20,
+    offset: int = 0,
 ):
-    return (
-        db.query(Song)
-        .filter(Song.owner_id == current_user.id)
+    query = db.query(Song).filter(Song.owner_id == current_user.id)
+
+    total = query.count()
+
+    songs = (
+        query
         .order_by(Song.created_at.desc())
+        .limit(limit)
+        .offset(offset)
         .all()
     )
 
+    return {
+        "items": songs,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
 # Auth – tạo bài
 @router.post(
