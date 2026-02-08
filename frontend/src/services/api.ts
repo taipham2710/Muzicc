@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { PaginatedSongs } from "../types/song";
+import type { SongCreate, Song } from "../types/song";
 
 export const api = axios.create({
   baseURL: "http://127.0.0.1:8000",
@@ -31,5 +32,10 @@ export async function fetchMySongs(
     const res = await api.get("/songs/me", {
         params: { limit, offset },
     });
+    return res.data;
+}
+
+export async function createSong(payload: SongCreate): Promise<Song> {
+    const res = await api.post("/songs", payload);
     return res.data;
 }

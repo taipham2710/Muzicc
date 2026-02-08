@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { fetchMySongs } from "../services/api";
-import type { Song } from "../types/song";
+import { fetchMySongs, createSong } from "../services/api";
 import Pagination from "../components/Pagination";
+import type { Song } from "../types/song";
 
 export default function MyMusic() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -9,6 +9,11 @@ export default function MyMusic() {
   const [limit] = useState(20);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     loadSongs();
@@ -27,11 +32,68 @@ export default function MyMusic() {
     }
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    await createSong({
+      title,
+      artist,
+      is_public: isPublic,
+      audio_url: "https://example.com/audio.mp3", // tạm
+    });
+
+    setTitle("");
+    setArtist("");
+    setIsPublic(true);
+    setShowForm(false);
+
+    loadSongs();
+  }
+
   return (
     <div>
       <h1>My Music</h1>
 
-      <button>➕ Upload more</button>
+      <button onClick={() => setShowForm((v) => !v)}>
+        + Upload more
+      </button>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
+          <div>
+            <label>Title</label><br />
+            <input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label>Artist</label><br />
+            <input
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+              />
+              Public
+            </label>
+          </div>
+
+          <button type="submit">Create</button>
+          <button type="button" onClick={() => setShowForm(false)}>
+            Cancel
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <p>Loading...</p>
