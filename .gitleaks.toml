@@ -33,5 +33,5 @@ tags = ["jwt", "secret"]
 [[rules]]
 id = "generic-password"
 description = "Detect generic hardcoded passwords"
-regex = '''(?i)(password|passwd|pwd)[\s:=]+.+'''
+regex = '''(?im)^\s*(password|passwd|pwd)\s*[:=]\s*[" '][^" '\s]{6,}[" ']'''
 tags = ["password", "generic"]
