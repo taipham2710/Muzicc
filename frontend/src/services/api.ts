@@ -14,13 +14,22 @@ api.interceptors.request.use((config) => {
 });
 
 
-
 export async function fetchPublicSongs(
-  limit: number,
-  offset: number
+    limit: number,
+    offset: number
 ): Promise<PaginatedSongs> {
-  const res = await api.get("/songs", {
-    params: { limit, offset },
-  });
-  return res.data;
+    const res = await api.get("/songs", {
+        params: { limit, offset },
+    });
+    return res.data;
+}
+
+export async function fetchMySongs(
+    limit: number,
+    offset: number
+): Promise<PaginatedSongs> {
+    const res = await api.get("/songs/me", {
+        params: { limit, offset },
+    });
+    return res.data;
 }
