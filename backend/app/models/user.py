@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -17,4 +17,10 @@ class User(Base):
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+    )
+
+    songs = relationship(
+        "Song",
+        back_populates="owner",
+        cascade="all, delete-orphan",
     )
