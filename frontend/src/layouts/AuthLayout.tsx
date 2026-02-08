@@ -1,14 +1,44 @@
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet, Link, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../stores/auth.store";
 
 export default function AuthLayout() {
+  const token = useAuthStore((state) => state.token);
+  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
   return (
     <div>
-      <header>
-        <h1>Muzicc</h1>
-        <div>User</div>
+      {/* Header */}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "12px 24px",
+          borderBottom: "1px solid #444",
+        }}
+      >
+        <Link to="/home" style={{ fontSize: 20, fontWeight: "bold" }}>
+          Muzicc
+        </Link>
+
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <span>User</span>
+          <button onClick={handleLogout}>Logout</button>
+        </div>
       </header>
 
-      <main>
+      {/* Page content */}
+      <main style={{ padding: 24 }}>
         <Outlet />
       </main>
     </div>
