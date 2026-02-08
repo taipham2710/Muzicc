@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.schemas.song import SongCreate, SongResponse
+from app.api.schemas.song import SongCreate, SongResponse, SongUpdate
 from app.core.auth import get_current_user
 from app.db.session import get_db
 from app.models.song import Song
@@ -20,8 +20,21 @@ def list_public_songs(
     db: Session = Depends(get_db),
     limit: int = 20,
     offset: int = 0,
+    q: str | None = None,
+    artist: str | None = None,
 ):
-    query = db.query(Song).filter(Song.is_public.is_(True))
+    query = db.query(Song).filter(
+        Song.is_public.is_(True),
+        Song.is_deleted.is_(False),
+    )
+
+    # SEARCH TITLE
+    if q:
+        query = query.filter(Song.title.ilike(f"%{q}%"))
+
+    # FILTER ARTIST
+    if artist:
+        query = query.filter(Song.artist.ilike(f"%{artist}%"))
 
     total = query.count()
 
@@ -40,12 +53,11 @@ def list_public_songs(
         "offset": offset,
     }
 
-
 # Auth – bài của tôi
-@router.get("/me", response_model=list[SongResponse])
 @router.get(
     "/me",
     response_model=PaginatedResponse[SongResponse],
+    operation_id="list_my_songs",
 )
 def list_my_songs(
     db: Session = Depends(get_db),
@@ -53,7 +65,10 @@ def list_my_songs(
     limit: int = 20,
     offset: int = 0,
 ):
-    query = db.query(Song).filter(Song.owner_id == current_user.id)
+    query = db.query(Song).filter(
+        Song.owner_id == current_user.id,
+        Song.is_deleted.is_(False),
+    )
 
     total = query.count()
 
@@ -98,14 +113,20 @@ def create_song(
     return song
 
 
-# Auth + ownership
-@router.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_song(
+@router.put(
+    "/{song_id}",
+    response_model=SongResponse,
+)
+def update_song(
     song_id: int,
+    payload: SongUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    song = db.query(Song).filter(Song.id == song_id).first()
+    song = db.query(Song).filter(
+        Song.id == song_id,
+        Song.is_deleted.is_(False),
+    ).first()
 
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
@@ -113,5 +134,31 @@ def delete_song(
     if song.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not allowed")
 
-    db.delete(song)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(song, field, value)
+
+    db.commit()
+    db.refresh(song)
+
+    return song
+
+# Auth + ownership
+@router.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_song(
+    song_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    song = db.query(Song).filter(
+        Song.id == song_id,
+        Song.is_deleted.is_(False),
+    ).first()
+
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+
+    if song.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    song.is_deleted = True
     db.commit()
