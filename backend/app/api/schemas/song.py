@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
+from typing import Optional
 
 
 # Base schema (shared)
@@ -17,10 +18,10 @@ class SongCreate(SongBase):
 
 # Update (PATCH /songs/{id})
 class SongUpdate(BaseModel):
-    title: str | None = None
-    artist: str | None = None
-    audio_url: str | None = None
-    is_public: bool | None = None
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    audio_url: Optional[str] = None
+    is_public: Optional[bool] = None
 
 
 # Response (API output)

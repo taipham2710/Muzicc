@@ -17,6 +17,13 @@ class Song(Base):
 
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        index=True,
+    )
+
     owner_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
