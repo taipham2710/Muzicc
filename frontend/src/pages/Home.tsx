@@ -1,3 +1,71 @@
+import { useEffect, useState } from "react";
+import { fetchPublicSongs } from "../services/api";
+import type { Song } from "../types/song";
+
+const PAGE_SIZE = 20;
+
 export default function Home() {
-  return <div>Home</div>;
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  async function loadSongs() {
+    setLoading(true);
+    try {
+      const data = await fetchPublicSongs(PAGE_SIZE, offset);
+      setSongs(data.items);
+      setTotal(data.total);
+    } catch (err) {
+      console.error("Failed to load songs", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadSongs();
+  }, [offset]);
+
+  return (
+    <div>
+      <h1>Public Songs</h1>
+
+      {loading && <p>Loading...</p>}
+
+      {!loading && (
+        <ul>
+          {songs.map((song) => (
+            <li key={song.id}>
+              <strong>{song.title}</strong> —{" "}
+              {song.artist ?? "Unknown"} (
+              {song.is_public ? "public" : "private"})
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Pagination */}
+      <div style={{ marginTop: 16 }}>
+        <button
+          disabled={offset === 0}
+          onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+        >
+          ◀ Prev
+        </button>
+
+        <span style={{ margin: "0 12px" }}>
+          Page {offset / PAGE_SIZE + 1} /{" "}
+          {Math.ceil(total / PAGE_SIZE)}
+        </span>
+
+        <button
+          disabled={offset + PAGE_SIZE >= total}
+          onClick={() => setOffset(offset + PAGE_SIZE)}
+        >
+          Next ▶
+        </button>
+      </div>
+    </div>
+  );
 }
