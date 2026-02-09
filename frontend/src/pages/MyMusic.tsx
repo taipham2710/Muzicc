@@ -3,8 +3,10 @@ import {
   fetchMySongs,
   createSong,
   updateSong,
+  deleteSong,
 } from "../services/api";
 import Pagination from "../components/Pagination";
+import SongItem from "../components/SongItem";
 import type { Song } from "../types/song";
 
 export default function MyMusic() {
@@ -37,7 +39,7 @@ export default function MyMusic() {
       setSongs(data.items);
       setTotal(data.total);
     } catch (err) {
-      console.error(err);
+      console.error("Load songs failed:", err);
     } finally {
       setLoading(false);
     }
@@ -46,11 +48,13 @@ export default function MyMusic() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (loading) return;
+
     await createSong({
       title,
       artist,
       is_public: isPublic,
-      audio_url: "https://example.com/audio.mp3", // tạm
+      audio_url: "https://example.com/audio.mp3", // placeholder
     });
 
     setTitle("");
@@ -112,64 +116,65 @@ export default function MyMusic() {
         <p>Loading...</p>
       ) : (
         <ul>
-          {songs.map((song) => (
-            <li key={song.id}>
-              {editingId === song.id ? (
-                <>
+          {songs.map((song) =>
+            editingId === song.id ? (
+              <li key={song.id}>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+                <input
+                  value={editArtist}
+                  onChange={(e) => setEditArtist(e.target.value)}
+                />
+                <label>
                   <input
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
+                    type="checkbox"
+                    checked={editPublic}
+                    onChange={(e) => setEditPublic(e.target.checked)}
                   />
-                  <input
-                    value={editArtist}
-                    onChange={(e) => setEditArtist(e.target.value)}
-                  />
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={editPublic}
-                      onChange={(e) => setEditPublic(e.target.checked)}
-                    />
-                    Public
-                  </label>
+                  Public
+                </label>
 
-                  <button
-                    onClick={async () => {
-                      await updateSong(song.id, {
-                        title: editTitle,
-                        artist: editArtist,
-                        is_public: editPublic,
-                      });
-                      setEditingId(null);
-                      loadSongs();
-                    }}
-                  >
-                    Save
-                  </button>
+                <button
+                  onClick={async () => {
+                    await updateSong(song.id, {
+                      title: editTitle,
+                      artist: editArtist,
+                      is_public: editPublic,
+                    });
+                    setEditingId(null);
+                    loadSongs();
+                  }}
+                >
+                  Save
+                </button>
 
-                  <button onClick={() => setEditingId(null)}>
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  {song.title} – {song.artist ?? "Unknown"} (
-                  {song.is_public ? "public" : "private"})
-                  <button
-                    onClick={() => {
-                      setEditingId(song.id);
-                      setEditTitle(song.title);
-                      setEditArtist(song.artist ?? "");
-                      setEditPublic(song.is_public);
-                    }}
-                  >
-                    ✏️
-                  </button>
-                  <button>🗑</button>
-                </>
-              )}
-            </li>
-          ))}
+                <button onClick={() => setEditingId(null)}>Cancel</button>
+              </li>
+            ) : (
+              <SongItem
+                key={song.id}
+                song={song}
+                showActions={true}
+                onEdit={() => {
+                  setEditingId(song.id);
+                  setEditTitle(song.title);
+                  setEditArtist(song.artist ?? "");
+                  setEditPublic(song.is_public);
+                }}
+                onDelete={async () => {
+                  const ok = window.confirm(
+                    `Delete "${song.title}"? This action cannot be undone.`
+                  );
+                  if (!ok) return;
+
+                  await deleteSong(song.id);
+                  loadSongs();
+                }}
+              />
+            )
+          )}
         </ul>
       )}
 
