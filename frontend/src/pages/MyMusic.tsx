@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { fetchMySongs, createSong } from "../services/api";
+import {
+  fetchMySongs,
+  createSong,
+  updateSong,
+} from "../services/api";
 import Pagination from "../components/Pagination";
 import type { Song } from "../types/song";
 
@@ -10,10 +14,17 @@ export default function MyMusic() {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // create
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [isPublic, setIsPublic] = useState(true);
+
+  // edit
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editArtist, setEditArtist] = useState("");
+  const [editPublic, setEditPublic] = useState(true);
 
   useEffect(() => {
     loadSongs();
@@ -61,7 +72,8 @@ export default function MyMusic() {
       {showForm && (
         <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
           <div>
-            <label>Title</label><br />
+            <label>Title</label>
+            <br />
             <input
               required
               value={title}
@@ -70,28 +82,29 @@ export default function MyMusic() {
           </div>
 
           <div>
-            <label>Artist</label><br />
+            <label>Artist</label>
+            <br />
             <input
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
             />
           </div>
 
-          <div>
-            <label>
-              <input
-                type="checkbox"
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
-              />
-              Public
-            </label>
-          </div>
+          <label>
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+            />
+            Public
+          </label>
 
-          <button type="submit">Create</button>
-          <button type="button" onClick={() => setShowForm(false)}>
-            Cancel
-          </button>
+          <div>
+            <button type="submit">Create</button>
+            <button type="button" onClick={() => setShowForm(false)}>
+              Cancel
+            </button>
+          </div>
         </form>
       )}
 
@@ -101,10 +114,60 @@ export default function MyMusic() {
         <ul>
           {songs.map((song) => (
             <li key={song.id}>
-              {song.title} – {song.artist ?? "Unknown"} (
-              {song.is_public ? "public" : "private"})
-              <button>✏️</button>
-              <button>🗑</button>
+              {editingId === song.id ? (
+                <>
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                  />
+                  <input
+                    value={editArtist}
+                    onChange={(e) => setEditArtist(e.target.value)}
+                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={editPublic}
+                      onChange={(e) => setEditPublic(e.target.checked)}
+                    />
+                    Public
+                  </label>
+
+                  <button
+                    onClick={async () => {
+                      await updateSong(song.id, {
+                        title: editTitle,
+                        artist: editArtist,
+                        is_public: editPublic,
+                      });
+                      setEditingId(null);
+                      loadSongs();
+                    }}
+                  >
+                    Save
+                  </button>
+
+                  <button onClick={() => setEditingId(null)}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  {song.title} – {song.artist ?? "Unknown"} (
+                  {song.is_public ? "public" : "private"})
+                  <button
+                    onClick={() => {
+                      setEditingId(song.id);
+                      setEditTitle(song.title);
+                      setEditArtist(song.artist ?? "");
+                      setEditPublic(song.is_public);
+                    }}
+                  >
+                    ✏️
+                  </button>
+                  <button>🗑</button>
+                </>
+              )}
             </li>
           ))}
         </ul>

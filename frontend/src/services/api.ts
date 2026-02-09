@@ -39,3 +39,15 @@ export async function createSong(payload: SongCreate): Promise<Song> {
     const res = await api.post("/songs", payload);
     return res.data;
 }
+
+export async function updateSong(
+    songId: number,
+    payload: {
+        title?: string;
+        artist?: string;
+        is_public?: boolean;
+    }
+) {
+    const res = await api.put(`/songs/${songId}`, payload);
+    return res.data;
+}
