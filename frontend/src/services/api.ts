@@ -1,7 +1,6 @@
 import axios from "axios";
 import type { PaginatedSongs, Song, SongCreate } from "../types/song";
 import { useAuthStore } from "../stores/auth.store";
-import { useAudioStore } from "../stores/audio.store";
 import { useToastStore } from "../stores/toast.store";
 
 export const api = axios.create({
