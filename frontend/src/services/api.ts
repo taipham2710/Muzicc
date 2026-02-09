@@ -1,5 +1,8 @@
 import axios from "axios";
 import type { PaginatedSongs, Song, SongCreate } from "../types/song";
+import { useAuthStore } from "../stores/auth.store";
+import { useAudioStore } from "../stores/audio.store";
+import { useToastStore } from "../stores/toast.store";
 
 export const api = axios.create({
   baseURL: "http://127.0.0.1:8000",
@@ -17,6 +20,46 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+// Global response handling: auth guard + basic network errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status as number | undefined;
+    const hasResponse = !!error?.response;
+
+    if (status === 401) {
+      // Auto logout khi token hết hạn / không hợp lệ
+      try {
+        useAuthStore.getState().logout();
+      } catch {
+        // ignore
+      }
+
+      // Điều hướng về trang login (hard redirect để clear state hoàn toàn)
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
+
+    // Network error (timeout, no connection) hoặc server error (5xx)
+    // Chỉ toast cho các lỗi này, không toast cho 4xx (trừ 401 đã xử lý)
+    if (!hasResponse || (status && status >= 500)) {
+      try {
+        const message =
+          status && status >= 500
+            ? "Server error. Please try again later."
+            : "Network error. Please check your connection.";
+        useToastStore.getState().show(message, "error");
+      } catch {
+        // ignore nếu store chưa sẵn sàng
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // ---------- PUBLIC ----------
 export async function fetchPublicSongs(
