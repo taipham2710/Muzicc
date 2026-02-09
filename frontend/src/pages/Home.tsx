@@ -32,12 +32,41 @@ export default function Home() {
     <div>
       <h1>Public Songs</h1>
 
-      {loading && <p>Loading...</p>}
+      {loading && (
+        <ul>
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <li key={idx} style={{ marginBottom: 12 }}>
+              <div
+                style={{
+                  width: "40%",
+                  height: 12,
+                  borderRadius: 4,
+                  background: "#333",
+                  marginBottom: 6,
+                }}
+              />
+              <div
+                style={{
+                  width: "25%",
+                  height: 10,
+                  borderRadius: 4,
+                  background: "#222",
+                }}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
 
       {!loading && (
         <ul>
           {songs.map((song) => (
-            <SongItem key={song.id} song={song} />
+            <SongItem
+              key={song.id}
+              song={song}
+              queue={songs}
+              disablePlay={loading}
+            />
           ))}
         </ul>
       )}

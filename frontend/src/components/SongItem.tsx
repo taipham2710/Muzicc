@@ -3,6 +3,12 @@ import { useAudioStore } from "../stores/audio.store";
 
 type Props = {
   song: Song;
+  /** Danh sách bài (từ Home/MyMusic) để auto play bài tiếp theo khi hết bài. */
+  queue?: Song[];
+  /** Disable nút play trong các state loading / không có audio. */
+  disablePlay?: boolean;
+  /** Disable các action như edit/delete khi đang request. */
+  disableActions?: boolean;
   showActions?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -10,6 +16,9 @@ type Props = {
 
 export default function SongItem({
   song,
+  queue,
+  disablePlay = false,
+  disableActions = false,
   showActions = false,
   onEdit,
   onDelete,
@@ -19,12 +28,14 @@ export default function SongItem({
   const isCurrentlyPlaying = isCurrentSong && isPlaying;
 
   function handlePlayPause() {
+    if (disablePlay || !song.audio_url) {
+      return;
+    }
+
     if (isCurrentSong && isPlaying) {
-      // Đang play bài này -> pause
       pause();
     } else {
-      // Chưa play hoặc đang pause -> play bài này
-      play(song);
+      play(song, queue);
     }
   }
 
@@ -34,14 +45,21 @@ export default function SongItem({
       {song.is_public ? "public" : "private"})
 
       <div style={{ marginTop: 4 }}>
-        <button onClick={handlePlayPause}>
+        <button
+          onClick={handlePlayPause}
+          disabled={disablePlay || !song.audio_url}
+        >
           {isCurrentlyPlaying ? "⏸ Pause" : "▶️ Play"}
         </button>
 
         {showActions && (
           <>
-            <button onClick={onEdit}>✏️</button>
-            <button onClick={onDelete}>🗑</button>
+            <button onClick={onEdit} disabled={disableActions}>
+              ✏️
+            </button>
+            <button onClick={onDelete} disabled={disableActions}>
+              🗑
+            </button>
           </>
         )}
       </div>
