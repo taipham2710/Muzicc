@@ -1,5 +1,6 @@
 import { Navigate, Outlet, Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/auth.store";
+import GlobalAudioPlayer from "../components/GlobalAudioPlayer";
 
 export default function AuthLayout() {
   const token = useAuthStore((state) => state.token);
@@ -38,9 +39,12 @@ export default function AuthLayout() {
       </header>
 
       {/* Page content */}
-      <main style={{ padding: 24 }}>
+      <main style={{ padding: 24, paddingBottom: 100 }}>
         <Outlet />
       </main>
+
+      {/* Global Audio Player */}
+      <GlobalAudioPlayer />
     </div>
   );
 }

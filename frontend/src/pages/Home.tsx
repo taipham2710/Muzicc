@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchPublicSongs } from "../services/api";
+import SongItem from "../components/SongItem";
 import type { Song } from "../types/song";
 
 const PAGE_SIZE = 20;
@@ -36,11 +37,7 @@ export default function Home() {
       {!loading && (
         <ul>
           {songs.map((song) => (
-            <li key={song.id}>
-              <strong>{song.title}</strong> —{" "}
-              {song.artist ?? "Unknown"} (
-              {song.is_public ? "public" : "private"})
-            </li>
+            <SongItem key={song.id} song={song} />
           ))}
         </ul>
       )}
