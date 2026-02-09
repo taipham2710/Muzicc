@@ -13,7 +13,7 @@ export default function GlobalAudioPlayer() {
     setDuration,
     setCurrentTime,
     pause,
-    stop,
+    playNext,
     play,
   } = useAudioStore();
 
@@ -95,7 +95,7 @@ export default function GlobalAudioPlayer() {
     };
 
     const handleEnded = () => {
-      stop();
+      playNext();
     };
 
     const handleError = (e: Event) => {
@@ -120,7 +120,7 @@ export default function GlobalAudioPlayer() {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
-  }, [setCurrentTime, setDuration, stop, pause]);
+  }, [setCurrentTime, setDuration, playNext, pause]);
 
   // Seek khi user click vào progress bar
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {

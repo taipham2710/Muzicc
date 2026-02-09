@@ -7,9 +7,11 @@ import {
 } from "../services/api";
 import Pagination from "../components/Pagination";
 import SongItem from "../components/SongItem";
+import { useToastStore } from "../stores/toast.store";
 import type { Song } from "../types/song";
 
 export default function MyMusic() {
+  const showToast = useToastStore((state) => state.show);
   const [songs, setSongs] = useState<Song[]>([]);
   const [total, setTotal] = useState(0);
   const [limit] = useState(20);
@@ -27,6 +29,8 @@ export default function MyMusic() {
   const [editTitle, setEditTitle] = useState("");
   const [editArtist, setEditArtist] = useState("");
   const [editPublic, setEditPublic] = useState(true);
+  const [savingId, setSavingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     loadSongs();
@@ -50,19 +54,25 @@ export default function MyMusic() {
 
     if (loading) return;
 
-    await createSong({
-      title,
-      artist,
-      is_public: isPublic,
-      audio_url: "https://example.com/audio.mp3", // placeholder
-    });
+    try {
+      await createSong({
+        title,
+        artist,
+        is_public: isPublic,
+        audio_url: "https://example.com/audio.mp3", // placeholder
+      });
 
-    setTitle("");
-    setArtist("");
-    setIsPublic(true);
-    setShowForm(false);
+      showToast("Song created successfully", "success");
+      setTitle("");
+      setArtist("");
+      setIsPublic(true);
+      setShowForm(false);
 
-    loadSongs();
+      loadSongs();
+    } catch (err) {
+      console.error("Create song failed:", err);
+      showToast("Failed to create song. Please try again.", "error");
+    }
   }
 
   return (
@@ -113,7 +123,29 @@ export default function MyMusic() {
       )}
 
       {loading ? (
-        <p>Loading...</p>
+        <ul>
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <li key={idx} style={{ marginBottom: 12 }}>
+              <div
+                style={{
+                  width: "40%",
+                  height: 12,
+                  borderRadius: 4,
+                  background: "#333",
+                  marginBottom: 6,
+                }}
+              />
+              <div
+                style={{
+                  width: "25%",
+                  height: 10,
+                  borderRadius: 4,
+                  background: "#222",
+                }}
+              />
+            </li>
+          ))}
+        </ul>
       ) : (
         <ul>
           {songs.map((song) =>
@@ -138,24 +170,44 @@ export default function MyMusic() {
 
                 <button
                   onClick={async () => {
-                    await updateSong(song.id, {
-                      title: editTitle,
-                      artist: editArtist,
-                      is_public: editPublic,
-                    });
-                    setEditingId(null);
-                    loadSongs();
+                    try {
+                      setSavingId(song.id);
+                      await updateSong(song.id, {
+                        title: editTitle,
+                        artist: editArtist,
+                        is_public: editPublic,
+                      });
+                      showToast("Song updated successfully", "success");
+                      setEditingId(null);
+                      loadSongs();
+                    } catch (err) {
+                      console.error("Update song failed:", err);
+                      showToast("Failed to update song. Please try again.", "error");
+                    } finally {
+                      setSavingId(null);
+                    }
                   }}
+                  disabled={savingId === song.id}
                 >
                   Save
                 </button>
 
-                <button onClick={() => setEditingId(null)}>Cancel</button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  disabled={savingId === song.id}
+                >
+                  Cancel
+                </button>
               </li>
             ) : (
               <SongItem
                 key={song.id}
                 song={song}
+                queue={songs}
+                disablePlay={loading}
+                disableActions={
+                  savingId === song.id || deletingId === song.id
+                }
                 showActions={true}
                 onEdit={() => {
                   setEditingId(song.id);
@@ -169,8 +221,17 @@ export default function MyMusic() {
                   );
                   if (!ok) return;
 
-                  await deleteSong(song.id);
-                  loadSongs();
+                  try {
+                    setDeletingId(song.id);
+                    await deleteSong(song.id);
+                    showToast("Song deleted successfully", "success");
+                    loadSongs();
+                  } catch (err) {
+                    console.error("Delete song failed:", err);
+                    showToast("Failed to delete song. Please try again.", "error");
+                  } finally {
+                    setDeletingId(null);
+                  }
                 }}
               />
             )
