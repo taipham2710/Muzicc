@@ -2,9 +2,284 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-base: #0a0a0a;
+  --bg-elevated: #111;
+  --bg-surface: #161616;
+  --bg-card: #1a1a1a;
+  --bg-card-hover: #222;
+  --border: #2a2a2a;
+  --border-focus: #1db954;
+  --text: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --primary: #1db954;
+  --primary-hover: #1ed760;
+  --primary-active: #169c46;
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --transition: 0.15s ease;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #0f0f0f;
-  color: #ffffff;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform 0.1s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover) !important;
+}
+.btn-primary:active:not(:disabled) {
+  background: var(--primary-active) !important;
+  transform: scale(0.98);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-surface) !important;
+  border-color: #404040 !important;
+  color: var(--text) !important;
+}
+
+/* Inputs */
+.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.input-field:hover {
+  border-color: #404040;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
+}
+
+/* Cards & list items */
+.song-item-card {
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.song-item-card:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Play button in song item */
+.play-btn-circle {
+  transition: background var(--transition), transform 0.1s ease;
+}
+.play-btn-circle:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+.play-btn-circle:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Action buttons (edit/delete) */
+.action-btn {
+  transition: background var(--transition), transform 0.1s ease;
+}
+.action-btn:hover:not(:disabled) {
+  background: #333 !important;
+  transform: scale(1.05);
+}
+.action-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Nav link hover */
+.nav-link {
+  transition: background var(--transition), color var(--transition);
+}
+.nav-link:hover {
+  background: var(--bg-surface) !important;
+  color: var(--text) !important;
+}
+
+/* Dropdown item hover */
+.dropdown-item:hover {
+  background: var(--bg-surface) !important;
+}
+
+/* Avatar / header button */
+.avatar-btn:hover {
+  background: var(--bg-surface) !important;
+  transform: scale(1.02);
+}
+.avatar-btn {
+  transition: background var(--transition), transform 0.1s ease;
+}
+
+/* Pagination buttons */
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.pagination-btn {
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+/* Page title */
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem 0;
+  color: var(--text);
+}
+
+/* Error banner */
+.error-banner {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  color: #fca5a5;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* List container */
+.song-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- Search bar: đều, đẹp, co giãn ---------- */
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.search-bar .search-input-wrap {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.search-bar .search-input-wrap input {
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 15px;
+}
+.search-bar .search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.search-bar .search-actions button {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 14px;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+}
+
+/* ---------- Bảng bài hát: cột thẳng hàng (Play | Title | Artist | Status | Actions) ---------- */
+.song-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.song-table-header {
+  display: grid;
+  grid-template-columns: 56px minmax(140px, 2fr) minmax(100px, 1fr) 88px 72px;
+  gap: 12px 16px;
+  align-items: center;
+  padding: 10px 18px 12px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.song-table-wrap .song-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.song-table-wrap .song-list .song-item-card {
+  display: grid;
+  grid-template-columns: 56px minmax(140px, 2fr) minmax(100px, 1fr) 88px 72px;
+  gap: 12px 16px;
+  align-items: center;
+  margin-bottom: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid var(--border);
+}
+.song-table-wrap .song-list .song-item-card:first-child {
+  border-top: none;
+}
+.song-table-wrap .song-list .song-item-card:hover {
+  border-radius: var(--radius-md);
+}
+.song-table-wrap .song-list .song-item-card .song-cell-play {
+  grid-column: 1;
+}
+.song-table-wrap .song-list .song-item-card .song-cell-title {
+  grid-column: 2;
+  min-width: 0;
+}
+.song-table-wrap .song-list .song-item-card .song-cell-artist {
+  grid-column: 3;
+  min-width: 0;
+}
+.song-table-wrap .song-list .song-item-card .song-cell-status {
+  grid-column: 4;
+}
+.song-table-wrap .song-list .song-item-card .song-cell-actions {
+  grid-column: 5;
+}
+.song-table-wrap .song-list .song-item-card .song-row-progress {
+  grid-column: 1 / -1;
 }
