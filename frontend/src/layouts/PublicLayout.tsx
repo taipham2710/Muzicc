@@ -1,34 +1,79 @@
 import { Link, Outlet } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import ToastContainer from "../components/ToastContainer";
+import GlobalAudioPlayer from "../components/GlobalAudioPlayer";
 
 export default function PublicLayout() {
+  const location = useLocation();
+  const isLogin = location.pathname === "/login";
+  const isRegister = location.pathname === "/register";
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "var(--bg-base)",
+        color: "var(--text)",
+      }}
+    >
       <header
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           padding: "16px 24px",
-          borderBottom: "1px solid #eee",
+          borderBottom: "1px solid var(--border)",
+          backgroundColor: "var(--bg-elevated)",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
-        {/* Left: App name */}
-        <Link to="/" style={{ fontSize: 20, fontWeight: 600 }}>
+        <Link
+          to="/"
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "var(--text)",
+            textDecoration: "none",
+            letterSpacing: "-0.02em",
+          }}
+        >
           Muzicc
         </Link>
 
-        {/* Right: Auth actions */}
-        <div style={{ display: "flex", gap: 16 }}>
-          <Link to="/login">Sign in</Link>
-          <Link to="/register">Sign up</Link>
+        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+          <Link
+            to="/login"
+            style={{
+              color: isLogin ? "var(--primary)" : "var(--text-secondary)",
+              textDecoration: "none",
+              fontSize: 15,
+              fontWeight: isLogin ? 600 : 500,
+            }}
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/register"
+            style={{
+              color: isRegister ? "var(--primary)" : "var(--text-secondary)",
+              textDecoration: "none",
+              fontSize: 15,
+              fontWeight: isRegister ? 600 : 500,
+            }}
+          >
+            Sign up
+          </Link>
         </div>
       </header>
 
-      {/* Page content */}
-      <main style={{ flex: 1, padding: 24 }}>
+      <main style={{ flex: 1, padding: 28, display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
         <Outlet />
       </main>
+
+      <GlobalAudioPlayer />
+      <ToastContainer />
     </div>
   );
 }
