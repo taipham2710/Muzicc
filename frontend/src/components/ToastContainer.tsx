@@ -23,16 +23,15 @@ export default function ToastContainer() {
           key={toast.id}
           onClick={() => remove(toast.id)}
           style={{
-            minWidth: 200,
-            maxWidth: 320,
-            padding: "8px 12px",
-            borderRadius: 4,
-            fontSize: 13,
+            minWidth: 220,
+            maxWidth: 340,
+            padding: "12px 16px",
+            borderRadius: "var(--radius-md)",
+            fontSize: 14,
             cursor: "pointer",
             color: "#fff",
-            backgroundColor:
-              toast.type === "success" ? "#16a34a" : "#dc2626",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
+            backgroundColor: toast.type === "success" ? "var(--primary)" : "var(--danger)",
+            boxShadow: "var(--shadow-md)",
           }}
         >
           {toast.message}
