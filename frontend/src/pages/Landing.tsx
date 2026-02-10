@@ -1,62 +1,124 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { fetchPublicSongs } from "../services/api";
+import SongItem from "../components/SongItem";
+import { isNetworkError } from "../utils/error";
+import type { Song } from "../types/song";
 
-type PublicSong = {
-  id: number;
-  title: string;
-  artist: string;
-  is_public: boolean;
-};
-
-const mockSongs: PublicSong[] = [
-  { id: 1, title: "Song One", artist: "Artist A", is_public: true },
-  { id: 2, title: "Song Two", artist: "Artist B", is_public: true },
-  { id: 3, title: "Song Three", artist: "Artist C", is_public: true },
-  { id: 4, title: "Song Four", artist: "Artist D", is_public: true },
-  { id: 5, title: "Song Five", artist: "Artist E", is_public: true },
-  { id: 6, title: "Song Six", artist: "Artist F", is_public: true },
-  { id: 7, title: "Song Seven", artist: "Artist G", is_public: true },
-  { id: 8, title: "Song Eight", artist: "Artist H", is_public: true },
-  { id: 9, title: "Song Nine", artist: "Artist I", is_public: true },
-  { id: 10, title: "Song Ten", artist: "Artist J", is_public: true },
-];
+const LANDING_SONGS_LIMIT = 10;
 
 export default function Landing() {
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  async function loadSongs() {
+    setLoadError(null);
+    setLoading(true);
+    try {
+      const data = await fetchPublicSongs(LANDING_SONGS_LIMIT, 0);
+      setSongs(data.items);
+    } catch (err) {
+      if (isNetworkError(err)) {
+        setLoadError("Không thể kết nối server. Hãy chạy backend (port 8000) rồi tải lại trang.");
+      } else {
+        setLoadError("Không tải được danh sách bài hát. Thử lại sau.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadSongs();
+  }, []);
+
   return (
-    <div style={{ padding: "2rem" }}>
+    <div style={{ width: "100%", maxWidth: 900 }}>
       {/* INTRO */}
-      <section>
-        <h1>Muzicc</h1>
-        <p>
-          Đây là ứng dụng web nhằm phục vụ sở thích nghe nhạc <b>không quảng cáo</b>.
+      <section style={{ marginBottom: 32 }}>
+        <h1 className="page-title" style={{ marginBottom: 12 }}>Muzicc</h1>
+        <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 8px 0" }}>
+          Đây là ứng dụng web nhằm phục vụ sở thích nghe nhạc <b style={{ color: "var(--text)" }}>không quảng cáo</b>.
         </p>
-        <p>
+        <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 20px 0" }}>
           Bạn hãy tạo tài khoản để có thể trải nghiệm đầy đủ tính năng.
         </p>
-
-        <div style={{ marginTop: "1rem" }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link to="/login">
-            <button>Sign in</button>
+            <button type="button" className="btn-primary" style={{ padding: "10px 20px", fontSize: 14 }}>
+              Sign in
+            </button>
           </Link>
-          <Link to="/register" style={{ marginLeft: "1rem" }}>
-            <button>Sign up</button>
+          <Link to="/register">
+            <button type="button" className="btn-secondary" style={{ padding: "10px 20px", fontSize: 14 }}>
+              Sign up
+            </button>
           </Link>
         </div>
       </section>
 
-      <hr style={{ margin: "2rem 0" }} />
+      <hr style={{ margin: "28px 0", border: "none", borderTop: "1px solid var(--border)" }} />
 
-      {/* PUBLIC SONG LIST */}
+      {/* PUBLIC SONGS - nghe thử không cần tài khoản */}
       <section>
-        <h2>Public songs</h2>
+        <h2 className="page-title" style={{ fontSize: "1.2rem", marginBottom: 16 }}>
+          Nghe thử — Public songs
+        </h2>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 20 }}>
+          Chọn bài bên dưới để nghe thử (không cần đăng nhập).
+        </p>
 
-        <ul>
-          {mockSongs.map((song) => (
-            <li key={song.id} style={{ marginBottom: "0.5rem" }}>
-              {song.title} — {song.artist}{" "}
-              <span style={{ opacity: 0.6 }}>(public)</span>
-            </li>
-          ))}
-        </ul>
+        {loadError && (
+          <div className="error-banner">
+            <span style={{ flex: 1 }}>{loadError}</span>
+            <button type="button" onClick={() => loadSongs()} className="btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>
+              Thử lại
+            </button>
+          </div>
+        )}
+
+        {loading && (
+          <ul className="song-list">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <li key={idx} style={{ marginBottom: 12 }}>
+                <div style={{ width: "40%", height: 12, borderRadius: 4, background: "#333", marginBottom: 6 }} />
+                <div style={{ width: "25%", height: 10, borderRadius: 4, background: "#222" }} />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!loading && !loadError && (
+          <div className="song-table-wrap">
+            <div className="song-table-header" role="row">
+              <span style={{ gridColumn: 1 }}>Play</span>
+              <span style={{ gridColumn: 2 }}>Title</span>
+              <span style={{ gridColumn: 3 }}>Artist</span>
+              <span style={{ gridColumn: 4 }}>Status</span>
+              <span style={{ gridColumn: 5 }} />
+            </div>
+            <ul className="song-list">
+              {songs.map((song) => (
+                <SongItem
+                  key={song.id}
+                  song={song}
+                  queue={songs}
+                  disablePlay={loading}
+                />
+              ))}
+            </ul>
+            {songs.length === 0 && (
+              <p style={{ padding: "24px 18px", color: "var(--text-muted)", fontSize: 14 }}>
+                Chưa có bài hát công khai. Đăng ký tài khoản và upload bài của bạn nhé.
+              </p>
+            )}
+          </div>
+        )}
+
+        {!loading && loadError && (
+          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Chưa có dữ liệu. Sửa lỗi kết nối rồi bấm Thử lại.</p>
+        )}
       </section>
     </div>
   );
