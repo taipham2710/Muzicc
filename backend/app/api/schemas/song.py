@@ -32,3 +32,16 @@ class SongResponse(SongBase):
 
     class Config:
         from_attributes = True
+
+
+# Upload URL request
+class UploadUrlRequest(BaseModel):
+    filename: str
+    content_type: str  # MIME type, ví dụ: "audio/mpeg"
+
+
+# Upload URL response
+class UploadUrlResponse(BaseModel):
+    upload_url: str  # Presigned URL để upload file
+    object_key: str  # Key trong S3 để lưu vào audio_url sau khi upload
+    public_url: str  # Public URL sau khi upload xong
