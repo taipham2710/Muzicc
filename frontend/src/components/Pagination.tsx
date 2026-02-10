@@ -17,23 +17,27 @@ export default function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div>
+    <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <button
+        type="button"
+        className="pagination-btn btn-secondary"
         disabled={offset === 0}
         onClick={() => onChange(offset - limit)}
+        style={{ padding: "8px 16px", fontSize: 14 }}
       >
-        {"<"}
+        ◀ Prev
       </button>
-
-      <span>
+      <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
         Page {currentPage} / {totalPages}
       </span>
-
       <button
+        type="button"
+        className="pagination-btn btn-secondary"
         disabled={offset + limit >= total}
         onClick={() => onChange(offset + limit)}
+        style={{ padding: "8px 16px", fontSize: 14 }}
       >
-        {">"}
+        Next ▶
       </button>
     </div>
   );
