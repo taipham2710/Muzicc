@@ -20,6 +20,10 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Tránh spam toast lỗi mạng: chỉ show tối đa 1 lần mỗi 4 giây
+let lastNetworkToastAt = 0;
+const NETWORK_TOAST_COOLDOWN_MS = 4000;
+
 // Global response handling: auth guard + basic network errors
 api.interceptors.response.use(
   (response) => response,
@@ -28,31 +32,31 @@ api.interceptors.response.use(
     const hasResponse = !!error?.response;
 
     if (status === 401) {
-      // Auto logout khi token hết hạn / không hợp lệ
       try {
         useAuthStore.getState().logout();
       } catch {
         // ignore
       }
-
-      // Điều hướng về trang login (hard redirect để clear state hoàn toàn)
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
       return Promise.reject(error);
     }
 
-    // Network error (timeout, no connection) hoặc server error (5xx)
-    // Chỉ toast cho các lỗi này, không toast cho 4xx (trừ 401 đã xử lý)
+    // Network error hoặc 5xx: toast nhưng không spam
     if (!hasResponse || (status && status >= 500)) {
-      try {
-        const message =
-          status && status >= 500
-            ? "Server error. Please try again later."
-            : "Network error. Please check your connection.";
-        useToastStore.getState().show(message, "error");
-      } catch {
-        // ignore nếu store chưa sẵn sàng
+      const now = Date.now();
+      if (now - lastNetworkToastAt >= NETWORK_TOAST_COOLDOWN_MS) {
+        lastNetworkToastAt = now;
+        try {
+          const message =
+            status && status >= 500
+              ? "Server error. Please try again later."
+              : "Không kết nối được server. Kiểm tra backend (port 8000).";
+          useToastStore.getState().show(message, "error");
+        } catch {
+          // ignore
+        }
       }
     }
 
@@ -63,10 +67,11 @@ api.interceptors.response.use(
 // ---------- PUBLIC ----------
 export async function fetchPublicSongs(
   limit: number,
-  offset: number
+  offset: number,
+  q?: string
 ): Promise<PaginatedSongs> {
   const res = await api.get("/songs", {
-    params: { limit, offset },
+    params: { limit, offset, ...(q?.trim() ? { q: q.trim() } : {}) },
   });
   return res.data;
 }
@@ -74,10 +79,11 @@ export async function fetchPublicSongs(
 // ---------- AUTH ----------
 export async function fetchMySongs(
   limit: number,
-  offset: number
+  offset: number,
+  q?: string
 ): Promise<PaginatedSongs> {
   const res = await api.get("/songs/me", {
-    params: { limit, offset },
+    params: { limit, offset, ...(q?.trim() ? { q: q.trim() } : {}) },
   });
   return res.data;
 }
@@ -103,4 +109,61 @@ export async function updateSong(
 
 export async function deleteSong(songId: number): Promise<void> {
   await api.delete(`/songs/${songId}`);
+}
+
+// ---------- UPLOAD ----------
+export interface UploadUrlResponse {
+  upload_url: string;
+  object_key: string;
+  public_url: string;
+}
+
+export async function getUploadUrl(
+  filename: string,
+  content_type: string
+): Promise<UploadUrlResponse> {
+  const res = await api.post("/songs/upload-url", {
+    filename,
+    content_type,
+  });
+  return res.data;
+}
+
+/**
+ * Upload file lên S3/MinIO bằng presigned URL.
+ * @param file File cần upload
+ * @param uploadUrl Presigned URL từ getUploadUrl
+ * @param onProgress Callback nhận progress (0-100)
+ */
+export async function uploadToS3(
+  file: File,
+  uploadUrl: string,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable && onProgress) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        onProgress(percent);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Upload failed"));
+    });
+
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.send(file);
+  });
 }
