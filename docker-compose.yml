@@ -1,0 +1,57 @@
+# Local test only — không dùng trong CI/production
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: muzicc
+      POSTGRES_PASSWORD: muzicc
+      POSTGRES_DB: muzicc
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - muzicc_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muzicc -d muzicc"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: muzicc-backend
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://muzicc:muzicc@db:5432/muzicc
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - muzicc_net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    image: muzicc-frontend
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - muzicc_net
+
+networks:
+  muzicc_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
