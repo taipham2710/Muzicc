@@ -68,7 +68,16 @@ export default function PublicLayout() {
         </div>
       </header>
 
-      <main style={{ flex: 1, padding: 28, display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
+      <main
+        style={{
+          flex: 1,
+          padding: 28,
+          paddingBottom: 120, // chừa chỗ cho GlobalAudioPlayer để không che nội dung cuối
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+        }}
+      >
         <Outlet />
       </main>
 
