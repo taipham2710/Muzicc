@@ -160,11 +160,10 @@ pipeline {
 
 def notifySlack(message) {
     withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
-        sh '''
-            set -euo pipefail
-            curl -X POST -H "Content-type: application/json" \
-                 --data "{\"text\":\"${message.replace('\"', '\\\"')}\"}" \
-                 "${SLACK_WEBHOOK}"
-        '''
+        sh """
+            curl -X POST -H 'Content-type: application/json' \
+                 --data '{"text":"${message}"}' \
+                 ${SLACK_WEBHOOK}
+        """
     }
 }
