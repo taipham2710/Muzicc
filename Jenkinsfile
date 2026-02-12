@@ -146,20 +146,10 @@ pipeline {
     }
 
     post {
-        started {
-            notifySlack("STARTED 🚀 Build ${BUILD_NUMBER} started")
-        }
-
-        success {
-            notifySlack("SUCCESS ✅ Build ${BUILD_NUMBER} succeeded")
-        }
-
-        failure {
-            notifySlack("FAILED ❌ Build ${BUILD_NUMBER} failed")
-        }
-
         always {
-            sh 'docker system prune -af || true'
+            script {
+                notifySlack("BUILD ${BUILD_NUMBER} finished with status: ${currentBuild.currentResult}")
+            }
         }
     }
 }
