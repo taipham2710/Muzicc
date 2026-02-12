@@ -44,24 +44,28 @@ pipeline {
                     sh '''
                         set -euo pipefail
 
-                        # Backend Scan
-                        docker run --rm \
-                        -e SONAR_HOST_URL=${SONAR_HOST} \
-                        -e SONAR_TOKEN=${SONAR_TOKEN} \
-                        -v "$PWD/backend:/usr/src" \
-                        sonarsource/sonar-scanner-cli \
-                        -Dsonar.projectKey=muzicc-backend \
-                        -Dsonar.sources=. \
+                        # Kiểm tra SonarQube reachable (in ra header cho dễ debug)
+                        echo "[INFO] Checking SonarQube at $SONAR_HOST ..."
+                        curl -I -sS "$SONAR_HOST" || true
+
+                        # ===== Backend Scan =====
+                        docker run --rm </span>
+                        -e SONAR_HOST_URL="$SONAR_HOST" </span>
+                        -e SONAR_LOGIN="$SONAR_TOKEN" </span>
+                        -v "$PWD/backend:/usr/src" </span>
+                        sonarsource/sonar-scanner-cli </span>
+                        -Dsonar.projectKey=muzicc-backend </span>
+                        -Dsonar.sources=. </span>
                         -Dsonar.projectVersion=${BUILD_NUMBER}
 
-                        # Frontend Scan
-                        docker run --rm \
-                        -e SONAR_HOST_URL=${SONAR_HOST} \
-                        -e SONAR_TOKEN=${SONAR_TOKEN} \
-                        -v "$PWD/frontend:/usr/src" \
-                        sonarsource/sonar-scanner-cli \
-                        -Dsonar.projectKey=muzicc-frontend \
-                        -Dsonar.sources=. \
+                        # ===== Frontend Scan =====
+                        docker run --rm </span>
+                        -e SONAR_HOST_URL="$SONAR_HOST" </span>
+                        -e SONAR_LOGIN="$SONAR_TOKEN" </span>
+                        -v "$PWD/frontend:/usr/src" </span>
+                        sonarsource/sonar-scanner-cli </span>
+                        -Dsonar.projectKey=muzicc-frontend </span>
+                        -Dsonar.sources=. </span>
                         -Dsonar.projectVersion=${BUILD_NUMBER}
                     '''
                 }
