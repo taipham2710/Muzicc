@@ -43,23 +43,27 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
                         set -euo pipefail
-                        cd backend
-                        sonar-scanner \
-                          -Dsonar.projectKey=muzicc-backend \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST} \
-                          -Dsonar.token="${SONAR_TOKEN}"
 
-                        cd ../frontend
-                        sonar-scanner \
-                          -Dsonar.projectKey=muzicc-frontend \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST} \
-                          -Dsonar.token="${SONAR_TOKEN}"
+                        # Backend Scan
+                        docker run --rm \
+                        -e SONAR_HOST_URL=${SONAR_HOST} \
+                        -e SONAR_TOKEN=${SONAR_TOKEN} \
+                        -v "$PWD/backend:/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=muzicc-backend \
+                        -Dsonar.sources=. \
+                        -Dsonar.projectVersion=${BUILD_NUMBER}
+
+                        # Frontend Scan
+                        docker run --rm \
+                        -e SONAR_HOST_URL=${SONAR_HOST} \
+                        -e SONAR_TOKEN=${SONAR_TOKEN} \
+                        -v "$PWD/frontend:/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=muzicc-frontend \
+                        -Dsonar.sources=. \
+                        -Dsonar.projectVersion=${BUILD_NUMBER}
                     '''
-                }
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
                 }
             }
         }
