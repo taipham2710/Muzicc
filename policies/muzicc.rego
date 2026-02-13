@@ -1,15 +1,17 @@
 package muzicc
 
-deny[msg] {
+default allow = true
+
+deny[msg] if {
     contains(input.image, ":latest")
-    msg = "Using latest tag is not allowed"
+    msg := "Using latest tag is not allowed"
 }
 
-deny[msg] {
+deny[msg] if {
     not contains(input.image, ":")
-    msg = "Image must have a tag"
+    msg := "Image must have a tag"
 }
 
-allow {
+allow if {
     count(deny) == 0
 }
