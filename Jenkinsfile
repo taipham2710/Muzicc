@@ -44,11 +44,13 @@ pipeline {
                     sh '''
                         set -euo pipefail
 
-                        echo "[INFO] WORKSPACE=$WORKSPACE"
-                        ls -la $WORKSPACE
-                        ls -la $WORKSPACE/backend
+                        cd "$WORKSPACE"
 
-                        # Backend
+                        echo "[INFO] Current dir:"
+                        pwd
+                        ls -la
+
+                        echo "[INFO] Backend scan..."
                         docker run --rm \
                         -e SONAR_HOST_URL="$SONAR_HOST" \
                         -e SONAR_TOKEN="$SONAR_TOKEN" \
@@ -56,10 +58,9 @@ pipeline {
                         sonarsource/sonar-scanner-cli \
                         -Dsonar.projectKey=muzicc-backend \
                         -Dsonar.sources=. \
-                        -Dsonar.projectVersion=${BUILD_NUMBER} \
-                        -Dsonar.scm.provider=git
+                        -Dsonar.projectVersion=${BUILD_NUMBER}
 
-                        # Frontend
+                        echo "[INFO] Frontend scan..."
                         docker run --rm \
                         -e SONAR_HOST_URL="$SONAR_HOST" \
                         -e SONAR_TOKEN="$SONAR_TOKEN" \
@@ -67,8 +68,7 @@ pipeline {
                         sonarsource/sonar-scanner-cli \
                         -Dsonar.projectKey=muzicc-frontend \
                         -Dsonar.sources=. \
-                        -Dsonar.projectVersion=${BUILD_NUMBER} \
-                        -Dsonar.scm.provider=git
+                        -Dsonar.projectVersion=${BUILD_NUMBER}
                     '''
                 }
             }
