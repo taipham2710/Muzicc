@@ -40,36 +40,36 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
-                script {
-                    withSonarQubeEnv('sonar') {
-                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                            sh '''
-                                set -euo pipefail
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        set -euo pipefail
 
-                                echo "🔍 Running SonarQube Scan..."
+                        echo "[INFO] WORKSPACE=$WORKSPACE"
+                        ls -la $WORKSPACE
+                        ls -la $WORKSPACE/backend
 
-                                # Backend
-                                docker run --rm \
-                                -e SONAR_HOST_URL=$SONAR_HOST_URL \
-                                -e SONAR_LOGIN=$SONAR_TOKEN \
-                                -v "$PWD/backend:/usr/src" \
-                                sonarsource/sonar-scanner-cli \
-                                -Dsonar.projectKey=muzicc-backend \
-                                -Dsonar.sources=. \
-                                -Dsonar.projectVersion=${BUILD_NUMBER}
+                        # Backend
+                        docker run --rm \
+                        -e SONAR_HOST_URL="$SONAR_HOST" \
+                        -e SONAR_TOKEN="$SONAR_TOKEN" \
+                        -v "$WORKSPACE/backend:/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=muzicc-backend \
+                        -Dsonar.sources=. \
+                        -Dsonar.projectVersion=${BUILD_NUMBER} \
+                        -Dsonar.scm.provider=git
 
-                                # Frontend
-                                docker run --rm \
-                                -e SONAR_HOST_URL=$SONAR_HOST_URL \
-                                -e SONAR_LOGIN=$SONAR_TOKEN \
-                                -v "$PWD/frontend:/usr/src" \
-                                sonarsource/sonar-scanner-cli \
-                                -Dsonar.projectKey=muzicc-frontend \
-                                -Dsonar.sources=. \
-                                -Dsonar.projectVersion=${BUILD_NUMBER}
-                            '''
-                        }
-                    }
+                        # Frontend
+                        docker run --rm \
+                        -e SONAR_HOST_URL="$SONAR_HOST" \
+                        -e SONAR_TOKEN="$SONAR_TOKEN" \
+                        -v "$WORKSPACE/frontend:/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=muzicc-frontend \
+                        -Dsonar.sources=. \
+                        -Dsonar.projectVersion=${BUILD_NUMBER} \
+                        -Dsonar.scm.provider=git
+                    '''
                 }
             }
         }
