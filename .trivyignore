@@ -1,0 +1,5 @@
+# Python ecdsa - no fix yet, not used in project
+CVE-2024-23342
+
+# glibc - base image issue, waiting upstream patch
+CVE-2026-0861
