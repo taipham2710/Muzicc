@@ -114,18 +114,26 @@ pipeline {
             steps {
                 sh '''
                     set -euo pipefail
-                    echo "{\"image\":\"${BACKEND_IMAGE}:${IMAGE_TAG}\"}" > input.json
-                    opa eval --fail-defined \
-                        --data policies/ \
-                        --input input.json \
-                        "data.muzicc.allow"
 
+                    check_policy () {
+                        IMAGE=$1
+                        echo "{\"image\":\"$IMAGE\"}" > input.json
 
-                    echo "{\"image\":\"${FRONTEND_IMAGE}:${IMAGE_TAG}\"}" > input.json
-                    opa eval --fail-defined \
-                        --data policies/ \
-                        --input input.json \
-                        "data.muzicc.allow"
+                        RESULT=$(opa eval -f raw \
+                            --data policies/ \
+                            --input input.json \
+                            "data.muzicc.allow")
+
+                        echo "[INFO] OPA result for $IMAGE = $RESULT"
+
+                        if [ "$RESULT" != "true" ]; then
+                            echo "OPA policy failed for $IMAGE"
+                            exit 1
+                        fi
+                    }
+
+                    check_policy "${BACKEND_IMAGE}:${IMAGE_TAG}"
+                    check_policy "${FRONTEND_IMAGE}:${IMAGE_TAG}"
                 '''
             }
         }
