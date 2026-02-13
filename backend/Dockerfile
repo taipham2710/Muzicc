@@ -4,6 +4,9 @@ FROM python:3.13-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
+# FIX OS vulnerabilities
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
