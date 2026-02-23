@@ -14,8 +14,13 @@ class Song(Base):
     artist: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # S3: source of truth key; file_url from get_file_url(s3_key)
-    s3_key: Mapped[str | None] = mapped_column(
-        String(512), unique=True, nullable=True, index=True
+    # NOTE: s3_key is NOT NULL for new data. Before enforcing NOT NULL at DB level,
+    # backfill existing rows where s3_key IS NULL.
+    s3_key: Mapped[str] = mapped_column(
+        String(512),
+        unique=True,
+        nullable=False,
+        index=True,
     )
     file_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
 
