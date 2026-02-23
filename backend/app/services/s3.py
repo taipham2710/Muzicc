@@ -4,6 +4,7 @@ Uses IRSA on EKS (no access keys). Bucket: songs/ prefix.
 """
 import logging
 import re
+import time
 import uuid
 from typing import Any, Optional
 from urllib.parse import quote
@@ -159,26 +160,37 @@ def get_file_url(object_key: str) -> str:
     return generate_presigned_get_url(object_key)
 
 
-def object_exists(object_key: str) -> bool:
+def object_exists(
+    object_key: str,
+    max_attempts: int = 3,
+    delay_seconds: float = 0.2,
+) -> bool:
     """
-    Verify that the object exists in S3 (head_object).
-    Use before confirm-upload to reject fake keys.
+    Verify that the object exists in S3 (head_object) with small retries.
+    Returns False when object truly does not exist.
+    Raises RuntimeError for infra / permission errors.
     """
     client = get_s3_client()
-    try:
-        client.head_object(Bucket=settings.S3_BUCKET, Key=object_key)
-        return True
-    except ClientError as e:
-        code = e.response.get("Error", {}).get("Code", "Unknown")
-        if code in ("404", "NoSuchKey"):
-            return False
-        logger.warning(
-            "S3 head_object failed: bucket=%s key=%s code=%s",
-            settings.S3_BUCKET,
-            object_key,
-            code,
-        )
-        raise ValueError(f"S3 check failed: {code}") from e
+    for attempt in range(max_attempts):
+        try:
+            client.head_object(Bucket=settings.S3_BUCKET, Key=object_key)
+            return True
+        except ClientError as e:
+            code = e.response.get("Error", {}).get("Code", "Unknown")
+            if code in ("404", "NoSuchKey"):
+                # Retry only on NoSuchKey to hide rare S3 latency after PUT.
+                if code == "NoSuchKey" and attempt < max_attempts - 1:
+                    time.sleep(delay_seconds)
+                    continue
+                return False
+            logger.warning(
+                "S3 head_object failed: bucket=%s key=%s code=%s",
+                settings.S3_BUCKET,
+                object_key,
+                code,
+                extra={"key": object_key, "error_code": code},
+            )
+            raise RuntimeError(f"S3 check failed: {code}") from e
 
 
 def list_songs(prefix: str = S3_PREFIX, max_keys: int = 1000) -> list[str]:
