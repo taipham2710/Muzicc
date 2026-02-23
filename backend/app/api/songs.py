@@ -231,21 +231,25 @@ def confirm_upload(
     Verifies file exists in S3 (head_object). DB stores only s3_key; URL generated at response time.
     """
     try:
-        if not object_exists(payload.key):
-            logger.warning(
-                "confirm-upload file not found in S3",
-                extra={"key": payload.key, "user_id": current_user.id},
-            )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File not found in S3. Upload the file first.",
-            )
-    except ValueError as e:
-        logger.warning("confirm-upload S3 check failed: %s", e)
+        exists = object_exists(payload.key)
+    except RuntimeError as e:
+        logger.error(
+            "confirm-upload S3 infra error",
+            extra={"key": payload.key, "user_id": current_user.id},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="S3 check failed",
+        ) from e
+    if not exists:
+        logger.warning(
+            "confirm-upload file not found in S3",
+            extra={"key": payload.key, "user_id": current_user.id},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        ) from e
+            detail="File not found in S3. Upload the file first.",
+        )
     existing = db.query(Song).filter(Song.s3_key == payload.key).first()
     if existing:
         logger.info(
