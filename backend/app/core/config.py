@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     S3_BUCKET: str = ""
-    S3_REGION: str = "us-east-1"
+    S3_REGION: str = "ap-southeast-1"
+    S3_PUBLIC: bool = False  # True = direct URL; False = presigned GET (private bucket)
 
     class Config:
         env_file = ".env"

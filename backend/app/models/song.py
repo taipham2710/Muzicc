@@ -10,10 +10,16 @@ class Song(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
 
-    title: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     artist: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    audio_url: Mapped[str] = mapped_column(String, nullable=False)
+    # S3: source of truth key; file_url from get_file_url(s3_key)
+    s3_key: Mapped[str | None] = mapped_column(
+        String(512), unique=True, nullable=True, index=True
+    )
+    file_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+
+    audio_url: Mapped[str] = mapped_column(String(2048), nullable=False, default="")
 
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 

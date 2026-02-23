@@ -1,9 +1,13 @@
-import uuid
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.api.schemas.common import PaginatedResponse
 from app.api.schemas.song import (
+    ALLOWED_UPLOAD_CONTENT_TYPE,
+    ConfirmUploadRequest,
     SongCreate,
     SongResponse,
     SongUpdate,
@@ -14,10 +18,39 @@ from app.core.auth import get_current_user
 from app.db.session import get_db
 from app.models.song import Song
 from app.models.user import User
-from app.api.schemas.common import PaginatedResponse
-from app.services.s3 import generate_presigned_upload_url, get_public_url
+from app.services.s3 import (
+    build_s3_key,
+    generate_presigned_upload_url,
+    get_file_url,
+    object_exists,
+)
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# DB stores only s3_key; never store presigned URL. file_url generated at response time.
+def song_to_response(song: Song) -> SongResponse:
+    """Build SongResponse with file_url from get_file_url(song.s3_key) at runtime."""
+    file_url: str | None = None
+    if song.s3_key:
+        try:
+            file_url = get_file_url(song.s3_key)
+        except Exception:
+            pass
+    # Backward compat: old rows may have audio_url stored (e.g. direct URL)
+    if file_url is None and getattr(song, "audio_url", None):
+        file_url = song.audio_url or None
+    return SongResponse(
+        id=song.id,
+        owner_id=song.owner_id,
+        title=song.title,
+        artist=song.artist,
+        audio_url=file_url or "",
+        is_public=song.is_public,
+        s3_key=song.s3_key,
+        file_url=file_url,
+        created_at=song.created_at,
+    )
 
 
 # Public – ai cũng xem được
@@ -56,7 +89,7 @@ def list_public_songs(
     )
 
     return {
-        "items": songs,
+        "items": [song_to_response(s) for s in songs],
         "total": total,
         "limit": limit,
         "offset": offset,
@@ -96,13 +129,35 @@ def list_my_songs(
     )
 
     return {
-        "items": songs,
+        "items": [song_to_response(s) for s in songs],
         "total": total,
         "limit": limit,
         "offset": offset,
     }
 
-# Auth – lấy presigned URL để upload audio
+
+# Public – single song by id (from DB only)
+@router.get(
+    "/{song_id}",
+    response_model=SongResponse,
+)
+def get_song(
+    song_id: int,
+    db: Session = Depends(get_db),
+):
+    song = (
+        db.query(Song)
+        .filter(Song.id == song_id, Song.is_deleted.is_(False))
+        .first()
+    )
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    if not song.is_public:
+        raise HTTPException(status_code=404, detail="Song not found")
+    return song_to_response(song)
+
+
+# Auth – presigned URL for S3 upload (POST /songs/upload-url)
 @router.post(
     "/upload-url",
     response_model=UploadUrlResponse,
@@ -111,50 +166,121 @@ def list_my_songs(
 def get_upload_url(
     payload: UploadUrlRequest,
     current_user: User = Depends(get_current_user),
-):
+) -> UploadUrlResponse:
     """
-    Tạo presigned URL để upload file audio lên S3/MinIO.
-
-    Validate:
-    - File type phải là audio (audio/*)
-    - Filename hợp lệ
+    Generate presigned URL for uploading an audio file to S3.
+    Only content_type "audio/mpeg" is allowed.
     """
-    # Validate content type
-    if not payload.content_type.startswith("audio/"):
+    if payload.content_type != ALLOWED_UPLOAD_CONTENT_TYPE:
+        logger.warning(
+            "Rejected upload-url request: invalid content_type=%s",
+            payload.content_type,
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an audio file",
+            detail=f"Only content_type '{ALLOWED_UPLOAD_CONTENT_TYPE}' is allowed",
         )
 
-    # Validate filename
     if not payload.filename or len(payload.filename) > 255:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid filename",
         )
 
-    # Tạo object key: songs/{user_id}/{uuid}.{ext}
-    file_ext = payload.filename.split(".")[-1] if "." in payload.filename else "mp3"
-    object_key = f"songs/{current_user.id}/{uuid.uuid4()}.{file_ext}"
-
+    object_key = build_s3_key(payload.filename)
     try:
         upload_url = generate_presigned_upload_url(
             object_key=object_key,
-            content_type=payload.content_type,
-            expires_in=3600,  # 1 hour
+            content_type=ALLOWED_UPLOAD_CONTENT_TYPE,
+            expires_in=3600,
         )
-        public_url = get_public_url(object_key)
-
+        file_url = get_file_url(object_key)
+        logger.info(
+            "Upload URL generated for user_id=%s key=%s",
+            current_user.id,
+            object_key,
+        )
         return UploadUrlResponse(
             upload_url=upload_url,
+            file_url=file_url,
+            key=object_key,
             object_key=object_key,
-            public_url=public_url,
+            public_url=file_url,
         )
-    except Exception as e:
+    except ValueError as e:
+        logger.exception("Failed to generate upload URL for key=%s", object_key)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate upload URL: {str(e)}",
+            detail=str(e),
+        ) from e
+
+
+# Auth – confirm upload: save metadata to DB after client uploaded file to S3
+@router.post(
+    "/confirm-upload",
+    response_model=SongResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def confirm_upload(
+    payload: ConfirmUploadRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> SongResponse:
+    """
+    After client uploads file to S3 using upload-url, call this to save metadata.
+    Verifies file exists in S3 (head_object). DB stores only s3_key; URL generated at response time.
+    """
+    try:
+        if not object_exists(payload.key):
+            logger.warning(
+                "confirm-upload file not found in S3",
+                extra={"key": payload.key, "user_id": current_user.id},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File not found in S3. Upload the file first.",
+            )
+    except ValueError as e:
+        logger.warning("confirm-upload S3 check failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
+    existing = db.query(Song).filter(Song.s3_key == payload.key).first()
+    if existing:
+        logger.info(
+            "confirm-upload duplicate key, returning existing",
+            extra={"key": payload.key, "user_id": current_user.id},
         )
+        return song_to_response(existing)
+    # Do NOT store presigned URL in DB; only s3_key. file_url generated at response time.
+    song = Song(
+        title=payload.title or None,
+        s3_key=payload.key,
+        file_url=None,
+        audio_url="",
+        is_public=True,
+        owner_id=current_user.id,
+    )
+    db.add(song)
+    try:
+        db.commit()
+        db.refresh(song)
+    except Exception as e:
+        logger.exception(
+            "confirm-upload DB insert failed",
+            extra={"key": payload.key, "user_id": current_user.id},
+        )
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error",
+        ) from e
+    logger.info(
+        "confirm-upload success",
+        extra={"key": payload.key, "user_id": current_user.id, "song_id": song.id},
+    )
+    return song_to_response(song)
 
 
 # Auth – tạo bài
@@ -180,7 +306,7 @@ def create_song(
     db.commit()
     db.refresh(song)
 
-    return song
+    return song_to_response(song)
 
 
 @router.put(
@@ -210,7 +336,7 @@ def update_song(
     db.commit()
     db.refresh(song)
 
-    return song
+    return song_to_response(song)
 
 # Auth + ownership
 @router.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
