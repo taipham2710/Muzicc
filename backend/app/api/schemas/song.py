@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from pydantic import BaseModel, field_validator
 from typing import Optional
 
@@ -45,10 +46,9 @@ class ConfirmUploadRequest(BaseModel):
     @field_validator("key")
     @classmethod
     def key_must_be_songs_mp3(cls, v: str) -> str:
-        if not v or not v.startswith("songs/"):
-            raise ValueError("key must start with 'songs/'")
-        if not v.endswith(".mp3"):
-            raise ValueError("only .mp3 files are allowed")
+        pattern = r"^songs/[0-9a-f]{8}\\.mp3$"
+        if not re.fullmatch(pattern, v):
+            raise ValueError("key must match pattern 'songs/{8-hex}.mp3'")
         return v
 
     @field_validator("title")
