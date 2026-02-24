@@ -4,7 +4,9 @@ import { useAuthStore } from "../stores/auth.store";
 import { useToastStore } from "../stores/toast.store";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  // All requests go through the same origin, behind Kubernetes Ingress.
+  // Backend routes are mounted under /api/* (see FastAPI main.py).
+  baseURL: "/api",
 });
 
 // Attach JWT token
