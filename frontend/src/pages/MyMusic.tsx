@@ -9,7 +9,7 @@ import {
 } from "../services/api";
 import Pagination from "../components/Pagination";
 import SongItem from "../components/SongItem";
-import { useToastStore } from "../stores.toast.store";
+import { useToastStore } from "../stores/toast.store";
 import { isNetworkError } from "../utils/error";
 import type { PaginatedSongs } from "../types/song";
 
