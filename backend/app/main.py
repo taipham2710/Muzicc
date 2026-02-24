@@ -17,9 +17,9 @@ def on_startup() -> None:
     init_db()
 
 
-app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(songs.router, prefix="/songs", tags=["songs"])
+app.include_router(health.router, prefix="/api/health", tags=["health"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(songs.router, prefix="/api/songs", tags=["songs"])
 
 app.add_middleware(
     CORSMiddleware,
