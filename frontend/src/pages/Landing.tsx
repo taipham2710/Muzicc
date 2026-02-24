@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { fetchPublicSongs } from "../services/api";
 import SongItem from "../components/SongItem";
 import { isNetworkError } from "../utils/error";
-import type { Song } from "../types/song";
+import type { PaginatedSongs } from "../types/song";
 
 const LANDING_SONGS_LIMIT = 10;
 
 export default function Landing() {
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [songs, setSongs] = useState<PaginatedSongs | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,7 +22,8 @@ export default function Landing() {
         0,
         q && q.trim() ? q.trim() : undefined
       );
-      setSongs(data.items);
+      console.log("Landing /songs response", data);
+      setSongs(data);
     } catch (err) {
       if (isNetworkError(err)) {
         setLoadError(
@@ -266,16 +267,16 @@ export default function Landing() {
               <span style={{ gridColumn: 5 }} />
             </div>
             <ul className="song-list">
-              {songs.map((song) => (
+              {(songs?.items ?? []).map((song) => (
                 <SongItem
                   key={song.id}
                   song={song}
-                  queue={songs}
+                  queue={songs?.items ?? []}
                   disablePlay={loading}
                 />
               ))}
             </ul>
-            {songs.length === 0 && (
+            {(songs?.items?.length ?? 0) === 0 && (
               <p
                 style={{
                   padding: "24px 18px",

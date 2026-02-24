@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { fetchPublicSongs } from "../services/api";
 import SongItem from "../components/SongItem";
 import { isNetworkError } from "../utils/error";
-import type { Song } from "../types/song";
+import type { PaginatedSongs } from "../types/song";
 
 const PAGE_SIZE = 20;
 
 export default function Home() {
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [songs, setSongs] = useState<PaginatedSongs | null>(null);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,8 +19,13 @@ export default function Home() {
     setLoadError(null);
     setLoading(true);
     try {
-      const data = await fetchPublicSongs(PAGE_SIZE, offset, searchSubmitted || undefined);
-      setSongs(data.items);
+      const data = await fetchPublicSongs(
+        PAGE_SIZE,
+        offset,
+        searchSubmitted || undefined
+      );
+      console.log("Home /songs response", data);
+      setSongs(data);
       setTotal(data.total);
     } catch (err) {
       if (isNetworkError(err)) {
@@ -119,11 +124,11 @@ export default function Home() {
             <span style={{ gridColumn: 5 }} />
           </div>
           <ul className="song-list">
-            {songs.map((song) => (
+            {(songs?.items ?? []).map((song) => (
               <SongItem
                 key={song.id}
                 song={song}
-                queue={songs}
+                queue={songs?.items ?? []}
                 disablePlay={loading}
               />
             ))}

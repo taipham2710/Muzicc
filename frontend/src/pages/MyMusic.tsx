@@ -9,13 +9,13 @@ import {
 } from "../services/api";
 import Pagination from "../components/Pagination";
 import SongItem from "../components/SongItem";
-import { useToastStore } from "../stores/toast.store";
+import { useToastStore } from "../stores.toast.store";
 import { isNetworkError } from "../utils/error";
-import type { Song } from "../types/song";
+import type { PaginatedSongs } from "../types/song";
 
 export default function MyMusic() {
   const showToast = useToastStore((state) => state.show);
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [songs, setSongs] = useState<PaginatedSongs | null>(null);
   const [total, setTotal] = useState(0);
   const [limit] = useState(20);
   const [offset, setOffset] = useState(0);
@@ -50,8 +50,13 @@ export default function MyMusic() {
     setLoadError(null);
     try {
       setLoading(true);
-      const data = await fetchMySongs(limit, offset, searchSubmitted || undefined);
-      setSongs(data.items);
+      const data = await fetchMySongs(
+        limit,
+        offset,
+        searchSubmitted || undefined
+      );
+      console.log("MyMusic /songs/me response", data);
+      setSongs(data);
       setTotal(data.total);
     } catch (err) {
       if (isNetworkError(err)) {
@@ -345,7 +350,7 @@ export default function MyMusic() {
             <span style={{ gridColumn: 5 }}>Thao tác</span>
           </div>
           <ul className="song-list">
-          {songs.map((song) =>
+          {(songs?.items ?? []).map((song) =>
             editingId === song.id ? (
               <li key={song.id} className="song-item-edit" style={{ padding: "14px 18px", marginBottom: 0, borderBottom: "1px solid var(--border)", borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-card)", border: "1px solid var(--border)" }}>
                 <input
@@ -410,40 +415,40 @@ export default function MyMusic() {
                 </div>
               </li>
             ) : (
-              <SongItem
-                key={song.id}
-                song={song}
-                queue={songs}
-                disablePlay={loading}
-                disableActions={
-                  savingId === song.id || deletingId === song.id
-                }
-                showActions={true}
-                onEdit={() => {
-                  setEditingId(song.id);
-                  setEditTitle(song.title);
-                  setEditArtist(song.artist ?? "");
-                  setEditPublic(song.is_public);
-                }}
-                onDelete={async () => {
-                  const ok = window.confirm(
-                    `Delete "${song.title}"? This action cannot be undone.`
-                  );
-                  if (!ok) return;
-
-                  try {
-                    setDeletingId(song.id);
-                    await deleteSong(song.id);
-                    showToast("Song deleted successfully", "success");
-                    loadSongs();
-                  } catch (err) {
-                    console.error("Delete song failed:", err);
-                    showToast("Failed to delete song. Please try again.", "error");
-                  } finally {
-                    setDeletingId(null);
+                <SongItem
+                  key={song.id}
+                  song={song}
+                  queue={songs?.items ?? []}
+                  disablePlay={loading}
+                  disableActions={
+                    savingId === song.id || deletingId === song.id
                   }
-                }}
-              />
+                  showActions={true}
+                  onEdit={() => {
+                    setEditingId(song.id);
+                    setEditTitle(song.title);
+                    setEditArtist(song.artist ?? "");
+                    setEditPublic(song.is_public);
+                  }}
+                  onDelete={async () => {
+                    const ok = window.confirm(
+                      `Delete "${song.title}"? This action cannot be undone.`
+                    );
+                    if (!ok) return;
+
+                    try {
+                      setDeletingId(song.id);
+                      await deleteSong(song.id);
+                      showToast("Song deleted successfully", "success");
+                      loadSongs();
+                    } catch (err) {
+                      console.error("Delete song failed:", err);
+                      showToast("Failed to delete song. Please try again.", "error");
+                    } finally {
+                      setDeletingId(null);
+                    }
+                  }}
+                />
             )
           )}
           </ul>
