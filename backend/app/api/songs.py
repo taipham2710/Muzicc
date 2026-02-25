@@ -1,4 +1,6 @@
 import logging
+import re
+from urllib.parse import unquote, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_
@@ -287,6 +289,25 @@ def confirm_upload(
     return song_to_response(song)
 
 
+# S3 key pattern (songs/{8-hex}.mp3) — must match upload flow
+_S3_KEY_RE = re.compile(r"^songs/[0-9a-f]{8}\.mp3$")
+
+
+def _s3_key_from_audio_url(audio_url: str) -> str | None:
+    """Extract s3_key from our S3 public/presigned URL (path before query)."""
+    if not audio_url or not audio_url.strip():
+        return None
+    try:
+        parsed = urlparse(audio_url)
+        path = (parsed.path or "").strip("/")
+        key = unquote(path)
+        if _S3_KEY_RE.fullmatch(key):
+            return key
+    except Exception:
+        pass
+    return None
+
+
 # Auth – tạo bài
 @router.post(
     "",
@@ -298,10 +319,22 @@ def create_song(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Backend requires s3_key (NOT NULL). Get from object_key or parse from audio_url.
+    s3_key = None
+    if payload.object_key and _S3_KEY_RE.fullmatch(payload.object_key):
+        s3_key = payload.object_key
+    elif payload.audio_url:
+        s3_key = _s3_key_from_audio_url(payload.audio_url)
+    if not s3_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="object_key required when creating song (or audio_url must be a valid S3 URL from upload)",
+        )
     song = Song(
         title=payload.title,
         artist=payload.artist,
-        audio_url=payload.audio_url,
+        s3_key=s3_key,
+        audio_url=payload.audio_url or "",
         is_public=payload.is_public,
         owner_id=current_user.id,
     )

@@ -12,9 +12,23 @@ class SongBase(BaseModel):
     is_public: bool = True
 
 
+# S3 key pattern from upload flow: songs/{8-hex}.mp3
+S3_KEY_PATTERN = re.compile(r"^songs/[0-9a-f]{8}\.mp3$")
+
+
 # Create (POST /songs)
 class SongCreate(SongBase):
-    pass
+    """object_key from getUploadUrl — required when creating after S3 upload (backend needs s3_key)."""
+    object_key: str | None = None
+
+    @field_validator("object_key")
+    @classmethod
+    def object_key_pattern(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not S3_KEY_PATTERN.fullmatch(v):
+            raise ValueError("object_key must match pattern 'songs/{8-hex}.mp3'")
+        return v
 
 
 # Update (PATCH /songs/{id})

@@ -31,6 +31,7 @@ export default function MyMusic() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
+  const [uploadedObjectKey, setUploadedObjectKey] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // edit
@@ -88,11 +89,12 @@ export default function MyMusic() {
     setAudioFile(file);
     setUploadProgress(null);
     setUploadedAudioUrl(null);
+    setUploadedObjectKey(null);
 
     // Auto upload khi chọn file
     try {
       setIsUploading(true);
-      const { upload_url, public_url } = await getUploadUrl(
+      const { upload_url, public_url, object_key } = await getUploadUrl(
         file.name,
         file.type
       );
@@ -102,6 +104,7 @@ export default function MyMusic() {
       });
 
       setUploadedAudioUrl(public_url);
+      setUploadedObjectKey(object_key);
       showToast("Audio uploaded successfully", "success");
     } catch (err) {
       console.error("Upload failed:", err);
@@ -129,6 +132,7 @@ export default function MyMusic() {
         artist,
         is_public: isPublic,
         audio_url: uploadedAudioUrl,
+        object_key: uploadedObjectKey ?? undefined,
       });
 
       showToast("Song created successfully", "success");
@@ -137,6 +141,7 @@ export default function MyMusic() {
       setIsPublic(true);
       setAudioFile(null);
       setUploadedAudioUrl(null);
+      setUploadedObjectKey(null);
       setUploadProgress(null);
       setShowForm(false);
 

@@ -20,4 +20,6 @@ export type SongCreate = {
   artist?: string;
   audio_url: string;
   is_public: boolean;
+  /** S3 object_key from getUploadUrl — backend needs it for s3_key (NOT NULL). */
+  object_key?: string;
 };
