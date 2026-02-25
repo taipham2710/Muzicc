@@ -353,7 +353,7 @@ export default function Landing() {
               textAlign: "center",
             }}
           >
-            Thông tin liên hệ
+            Contact information
           </h4>
           <div
             style={{
@@ -370,7 +370,7 @@ export default function Landing() {
               <strong>Phone number:</strong> 0703423072
             </p>
             <p style={{ margin: 0 }}>
-              <strong>Địa chỉ:</strong> Ho Chi Minh City, Viet Nam
+              <strong>Address:</strong> Ho Chi Minh City, Viet Nam
             </p>
           </div>
           <div
