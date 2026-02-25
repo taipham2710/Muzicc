@@ -166,6 +166,28 @@ export default function MyMusic() {
     boxSizing: "border-box" as const,
   };
 
+  const modalOverlay: React.CSSProperties = {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1100,
+    padding: 24,
+  };
+  const modalCard: React.CSSProperties = {
+    backgroundColor: "var(--bg-card)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-md)",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+    width: "100%",
+    maxWidth: 420,
+    maxHeight: "90vh",
+    overflowY: "auto",
+    padding: 24,
+  };
+
   return (
     <div>
       <h1 className="page-title">My Music</h1>
@@ -208,7 +230,7 @@ export default function MyMusic() {
 
       <button
         type="button"
-        onClick={() => setShowForm((v) => !v)}
+        onClick={() => setShowForm(true)}
         className="btn-primary"
         style={{ padding: "10px 18px", fontSize: 14 }}
       >
@@ -216,109 +238,218 @@ export default function MyMusic() {
       </button>
 
       {showForm && (
-        <form onSubmit={handleSubmit} style={{ marginTop: 24, maxWidth: 400 }}>
-          <label style={formLabelStyle}>Title (bắt buộc)</label>
-          <input
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={isUploading}
-            className="input-field"
-            style={formInputStyle}
-            placeholder="Tên bài hát"
-          />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="upload-modal-title"
+          style={modalOverlay}
+          onClick={() => {
+            if (!isUploading) {
+              setShowForm(false);
+              setAudioFile(null);
+              setUploadedAudioUrl(null);
+              setUploadedObjectKey(null);
+              setUploadProgress(null);
+            }
+          }}
+        >
+          <div
+            style={modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="upload-modal-title" style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 600, color: "var(--text)" }}>
+              Thêm bài hát
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <label style={formLabelStyle}>Title (bắt buộc)</label>
+              <input
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={isUploading}
+                className="input-field"
+                style={formInputStyle}
+                placeholder="Tên bài hát"
+              />
 
-          <label style={formLabelStyle}>Artist (tùy chọn)</label>
-          <input
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-            disabled={isUploading}
-            className="input-field"
-            style={formInputStyle}
-            placeholder="Ca sĩ"
-          />
+              <label style={formLabelStyle}>Artist (tùy chọn)</label>
+              <input
+                value={artist}
+                onChange={(e) => setArtist(e.target.value)}
+                disabled={isUploading}
+                className="input-field"
+                style={formInputStyle}
+                placeholder="Ca sĩ"
+              />
 
-          <label style={formLabelStyle}>
-            Audio File <span style={{ color: "#999", fontWeight: 400 }}>(bắt buộc)</span>
-          </label>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={handleFileChange}
-            disabled={isUploading}
-            style={{ marginBottom: 8 }}
-          />
-          {audioFile && !uploadedAudioUrl && !isUploading && (
-            <div style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
-              Chọn file: {audioFile.name}
-            </div>
-          )}
-            {isUploading && uploadProgress !== null && (
-              <div style={{ marginTop: 8 }}>
-                <div
-                  style={{
-                    width: "100%",
-                    height: 8,
-                    backgroundColor: "#333",
-                    borderRadius: 4,
-                    overflow: "hidden",
-                  }}
+              <label style={formLabelStyle}>
+                Audio File <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(bắt buộc)</span>
+              </label>
+              <div style={{ marginBottom: 12 }}>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                  style={{ fontSize: 14 }}
+                />
+                {audioFile && !uploadedAudioUrl && !isUploading && (
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+                    Đã chọn: {audioFile.name}
+                  </div>
+                )}
+                {isUploading && uploadProgress !== null && (
+                  <div style={{ marginTop: 10 }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 8,
+                        backgroundColor: "var(--border)",
+                        borderRadius: 4,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${uploadProgress}%`,
+                          height: "100%",
+                          backgroundColor: "var(--primary)",
+                          transition: "width 0.3s",
+                        }}
+                      />
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+                      Đang tải lên... {uploadProgress}%
+                    </div>
+                  </div>
+                )}
+                {uploadedAudioUrl && !isUploading && (
+                  <div style={{ fontSize: 12, color: "var(--primary)", marginTop: 6 }}>
+                    ✓ Đã tải audio lên
+                  </div>
+                )}
+              </div>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  disabled={isUploading}
+                />
+                <span style={{ fontSize: 14 }}>Public</span>
+              </label>
+
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  type="submit"
+                  disabled={isUploading || !uploadedAudioUrl || loading}
+                  className="btn-primary"
+                  style={{ padding: "10px 20px", fontSize: 14 }}
                 >
-                  <div
-                    style={{
-                      width: `${uploadProgress}%`,
-                      height: "100%",
-                      backgroundColor: "#1db954",
-                      transition: "width 0.3s",
-                    }}
-                  />
-                </div>
-                <div style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
-                  Uploading... {uploadProgress}%
-                </div>
+                  {isUploading ? "Đang tải..." : "Tạo bài hát"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setAudioFile(null);
+                    setUploadedAudioUrl(null);
+                    setUploadedObjectKey(null);
+                    setUploadProgress(null);
+                  }}
+                  disabled={isUploading}
+                  className="btn-secondary"
+                  style={{ padding: "10px 20px", fontSize: 14 }}
+                >
+                  Hủy
+                </button>
               </div>
-            )}
-            {uploadedAudioUrl && !isUploading && (
-              <div style={{ fontSize: 12, color: "#16a34a", marginTop: 4 }}>
-                ✓ Audio uploaded
-              </div>
-            )}
-
-          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-              disabled={isUploading}
-            />
-            <span style={{ fontSize: 14 }}>Public</span>
-          </label>
-
-          <div style={{ display: "flex", gap: 12 }}>
-            <button
-              type="submit"
-              disabled={isUploading || !uploadedAudioUrl || loading}
-              className="btn-primary"
-              style={{ padding: "10px 20px", fontSize: 14 }}
-            >
-              {isUploading ? "Uploading..." : "Create"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowForm(false);
-                setAudioFile(null);
-                setUploadedAudioUrl(null);
-                setUploadProgress(null);
-              }}
-              disabled={isUploading}
-              className="btn-secondary"
-              style={{ padding: "10px 20px", fontSize: 14 }}
-            >
-              Cancel
-            </button>
+            </form>
           </div>
-        </form>
+        </div>
+      )}
+
+      {editingId !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-modal-title"
+          style={modalOverlay}
+          onClick={() => {
+            if (savingId === null) setEditingId(null);
+          }}
+        >
+          <div
+            style={modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="edit-modal-title" style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 600, color: "var(--text)" }}>
+              Chỉnh sửa bài hát
+            </h2>
+            <label style={formLabelStyle}>Title</label>
+            <input
+              className="input-field"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder="Tên bài hát"
+              style={{ ...formInputStyle, marginBottom: 16 }}
+            />
+            <label style={formLabelStyle}>Artist</label>
+            <input
+              className="input-field"
+              value={editArtist}
+              onChange={(e) => setEditArtist(e.target.value)}
+              placeholder="Ca sĩ"
+              style={{ ...formInputStyle, marginBottom: 16 }}
+            />
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+              <input
+                type="checkbox"
+                checked={editPublic}
+                onChange={(e) => setEditPublic(e.target.checked)}
+              />
+              <span style={{ fontSize: 14 }}>Public</span>
+            </label>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setSavingId(editingId);
+                    await updateSong(editingId, {
+                      title: editTitle,
+                      artist: editArtist,
+                      is_public: editPublic,
+                    });
+                    showToast("Đã cập nhật bài hát", "success");
+                    setEditingId(null);
+                    loadSongs();
+                  } catch (err) {
+                    console.error("Update song failed:", err);
+                    showToast("Cập nhật thất bại. Thử lại sau.", "error");
+                  } finally {
+                    setSavingId(null);
+                  }
+                }}
+                disabled={savingId === editingId}
+                className="btn-primary"
+                style={{ padding: "10px 20px", fontSize: 14 }}
+              >
+                {savingId === editingId ? "Đang lưu..." : "Lưu"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                disabled={savingId === editingId}
+                className="btn-secondary"
+                style={{ padding: "10px 20px", fontSize: 14 }}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {loading && !loadError ? (
@@ -355,107 +486,42 @@ export default function MyMusic() {
             <span style={{ gridColumn: 5 }}>Thao tác</span>
           </div>
           <ul className="song-list">
-          {(songs?.items ?? []).map((song) =>
-            editingId === song.id ? (
-              <li key={song.id} className="song-item-edit" style={{ padding: "14px 18px", marginBottom: 0, borderBottom: "1px solid var(--border)", borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-card)", border: "1px solid var(--border)" }}>
-                <input
-                  className="input-field"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="Title"
-                  style={{ marginBottom: 10, maxWidth: 360 }}
-                />
-                <input
-                  className="input-field"
-                  value={editArtist}
-                  onChange={(e) => setEditArtist(e.target.value)}
-                  placeholder="Artist"
-                  style={{ marginBottom: 12, maxWidth: 360 }}
-                />
-                <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                  <input
-                    type="checkbox"
-                    checked={editPublic}
-                    onChange={(e) => setEditPublic(e.target.checked)}
-                  />
-                  <span style={{ fontSize: 14 }}>Public</span>
-                </label>
+            {(songs?.items ?? []).map((song) => (
+              <SongItem
+                key={song.id}
+                song={song}
+                queue={songs?.items ?? []}
+                disablePlay={loading}
+                disableActions={
+                  savingId === song.id || deletingId === song.id
+                }
+                showActions={true}
+                onEdit={() => {
+                  setEditingId(song.id);
+                  setEditTitle(song.title ?? "");
+                  setEditArtist(song.artist ?? "");
+                  setEditPublic(song.is_public);
+                }}
+                onDelete={async () => {
+                  const ok = window.confirm(
+                    `Delete "${song.title}"? This action cannot be undone.`
+                  );
+                  if (!ok) return;
 
-                <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      setSavingId(song.id);
-                      await updateSong(song.id, {
-                        title: editTitle,
-                        artist: editArtist,
-                        is_public: editPublic,
-                      });
-                      showToast("Song updated successfully", "success");
-                      setEditingId(null);
-                      loadSongs();
-                    } catch (err) {
-                      console.error("Update song failed:", err);
-                      showToast("Failed to update song. Please try again.", "error");
-                    } finally {
-                      setSavingId(null);
-                    }
-                  }}
-                  disabled={savingId === song.id}
-                  className="btn-primary"
-                  style={{ padding: "8px 16px", fontSize: 14 }}
-                >
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingId(null)}
-                  disabled={savingId === song.id}
-                  className="btn-secondary"
-                  style={{ padding: "8px 16px", fontSize: 14 }}
-                >
-                  Cancel
-                </button>
-                </div>
-              </li>
-            ) : (
-                <SongItem
-                  key={song.id}
-                  song={song}
-                  queue={songs?.items ?? []}
-                  disablePlay={loading}
-                  disableActions={
-                    savingId === song.id || deletingId === song.id
+                  try {
+                    setDeletingId(song.id);
+                    await deleteSong(song.id);
+                    showToast("Song deleted successfully", "success");
+                    loadSongs();
+                  } catch (err) {
+                    console.error("Delete song failed:", err);
+                    showToast("Failed to delete song. Please try again.", "error");
+                  } finally {
+                    setDeletingId(null);
                   }
-                  showActions={true}
-                  onEdit={() => {
-                    setEditingId(song.id);
-                    setEditTitle(song.title);
-                    setEditArtist(song.artist ?? "");
-                    setEditPublic(song.is_public);
-                  }}
-                  onDelete={async () => {
-                    const ok = window.confirm(
-                      `Delete "${song.title}"? This action cannot be undone.`
-                    );
-                    if (!ok) return;
-
-                    try {
-                      setDeletingId(song.id);
-                      await deleteSong(song.id);
-                      showToast("Song deleted successfully", "success");
-                      loadSongs();
-                    } catch (err) {
-                      console.error("Delete song failed:", err);
-                      showToast("Failed to delete song. Please try again.", "error");
-                    } finally {
-                      setDeletingId(null);
-                    }
-                  }}
-                />
-            )
-          )}
+                }}
+              />
+            ))}
           </ul>
         </div>
       ) : null}
