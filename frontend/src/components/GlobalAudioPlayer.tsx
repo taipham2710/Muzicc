@@ -74,21 +74,45 @@ export default function GlobalAudioPlayer() {
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
+    const handleDurationChange = () => {
+      if (Number.isFinite(audio.duration)) setDuration(audio.duration);
+    };
     const handleEnded = () => playNext();
     const handleError = () => pause();
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("durationchange", handleDurationChange);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("durationchange", handleDurationChange);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
   }, [setCurrentTime, setDuration, playNext, pause]);
+
+  // Sync time/progress from audio element while playing (backup for throttled timeupdate)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentSong || !isPlaying) return;
+
+    const tick = () => {
+      const a = audioRef.current;
+      if (!a) return;
+      const t = a.currentTime;
+      const d = a.duration;
+      if (Number.isFinite(t)) setCurrentTime(t);
+      if (Number.isFinite(d) && d > 0) setDuration(d);
+    };
+
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [currentSong, isPlaying, setCurrentTime, setDuration]);
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;

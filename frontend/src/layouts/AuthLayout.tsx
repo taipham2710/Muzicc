@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Navigate, Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/auth.store";
+import { useAudioStore } from "../stores/audio.store";
 import GlobalAudioPlayer from "../components/GlobalAudioPlayer";
 import ToastContainer from "../components/ToastContainer";
 
@@ -31,10 +32,18 @@ export default function AuthLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  const stopAudio = useAudioStore((s) => s.stop);
+
   function handleLogout() {
     setDropdownOpen(false);
     logout();
     navigate("/login");
+  }
+
+  function handleMuziccClick(e: React.MouseEvent) {
+    e.preventDefault();
+    stopAudio();
+    window.location.href = "/home";
   }
 
   return (
@@ -51,8 +60,9 @@ export default function AuthLayout() {
           boxShadow: "var(--shadow-sm)",
         }}
       >
-        <Link
-          to="/home"
+        <a
+          href="/home"
+          onClick={handleMuziccClick}
           style={{
             fontSize: 20,
             fontWeight: 700,
@@ -62,7 +72,7 @@ export default function AuthLayout() {
           }}
         >
           Muzicc
-        </Link>
+        </a>
 
         <div ref={dropdownRef} style={{ position: "relative" }}>
           <button

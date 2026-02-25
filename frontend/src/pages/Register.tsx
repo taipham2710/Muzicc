@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../services/api";
 import { useAuthStore } from "../stores/auth.store";
+import { useAudioStore } from "../stores/audio.store";
 
 const formStyle: React.CSSProperties = {
   maxWidth: 360,
@@ -22,11 +23,16 @@ const inputStyle: React.CSSProperties = { marginBottom: 16 };
 export default function Register() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+  const stopAudio = useAudioStore((s) => s.stop);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    stopAudio();
+  }, [stopAudio]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,11 +2,19 @@ import { Link, Outlet } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import ToastContainer from "../components/ToastContainer";
 import GlobalAudioPlayer from "../components/GlobalAudioPlayer";
+import { useAudioStore } from "../stores/audio.store";
 
 export default function PublicLayout() {
   const location = useLocation();
   const isLogin = location.pathname === "/login";
   const isRegister = location.pathname === "/register";
+  const stopAudio = useAudioStore((s) => s.stop);
+
+  const handleMuziccClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    stopAudio();
+    window.location.href = "/";
+  };
 
   return (
     <div
@@ -29,8 +37,9 @@ export default function PublicLayout() {
           boxShadow: "var(--shadow-sm)",
         }}
       >
-        <Link
-          to="/"
+        <a
+          href="/"
+          onClick={handleMuziccClick}
           style={{
             fontSize: 20,
             fontWeight: 700,
@@ -40,7 +49,7 @@ export default function PublicLayout() {
           }}
         >
           Muzicc
-        </Link>
+        </a>
 
         <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
           <Link
