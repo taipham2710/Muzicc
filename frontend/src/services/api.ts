@@ -114,19 +114,33 @@ export async function deleteSong(songId: number): Promise<void> {
 }
 
 // ---------- UPLOAD ----------
+export interface CheckFileResponse {
+  exists: boolean;
+  object_key?: string | null;
+  file_url?: string | null;
+}
+
 export interface UploadUrlResponse {
-  upload_url: string;
+  upload_url: string | null;
   object_key: string;
   public_url: string;
+  already_exists: boolean;
+}
+
+export async function checkFile(file_hash: string): Promise<CheckFileResponse> {
+  const res = await api.post("/songs/check-file", { file_hash });
+  return res.data;
 }
 
 export async function getUploadUrl(
   filename: string,
-  content_type: string
+  content_type: string,
+  file_hash: string
 ): Promise<UploadUrlResponse> {
   const res = await api.post("/songs/upload-url", {
     filename,
     content_type,
+    file_hash,
   });
   return res.data;
 }

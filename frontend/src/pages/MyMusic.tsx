@@ -6,6 +6,7 @@ import {
   deleteSong,
   getUploadUrl,
   uploadToS3,
+  checkFile,
 } from "../services/api";
 import Pagination from "../components/Pagination";
 import SongItem from "../components/SongItem";
@@ -32,6 +33,7 @@ export default function MyMusic() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
   const [uploadedObjectKey, setUploadedObjectKey] = useState<string | null>(null);
+  const [uploadedFileHash, setUploadedFileHash] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // edit
@@ -90,22 +92,49 @@ export default function MyMusic() {
     setUploadProgress(null);
     setUploadedAudioUrl(null);
     setUploadedObjectKey(null);
+    setUploadedFileHash(null);
 
     // Auto upload khi chọn file
     try {
       setIsUploading(true);
-      const { upload_url, public_url, object_key } = await getUploadUrl(
-        file.name,
-        file.type
-      );
 
-      await uploadToS3(file, upload_url, (progress) => {
-        setUploadProgress(progress);
-      });
+      // SHA256 hash của file để dedup phía backend
+      const buffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const fileHash = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      // 1) Check xem file đã tồn tại chưa
+      const check = await checkFile(fileHash);
+      if (check.exists && check.object_key && check.file_url) {
+        setUploadedAudioUrl(check.file_url);
+        setUploadedObjectKey(check.object_key);
+        setUploadedFileHash(fileHash);
+        showToast("File already exists. Reusing uploaded audio.", "success");
+        return;
+      }
+
+      // 2) Nếu chưa có thì xin upload-url (có dedup fallback ở backend)
+      const { upload_url, public_url, object_key, already_exists } =
+        await getUploadUrl(file.name, file.type, fileHash);
+
+      if (!already_exists && upload_url) {
+        await uploadToS3(file, upload_url, (progress) => {
+          setUploadProgress(progress);
+        });
+      }
 
       setUploadedAudioUrl(public_url);
       setUploadedObjectKey(object_key);
-      showToast("Audio uploaded successfully", "success");
+      setUploadedFileHash(fileHash);
+      showToast(
+        already_exists
+          ? "File already exists. Reusing uploaded audio."
+          : "Audio uploaded successfully",
+        "success"
+      );
     } catch (err) {
       console.error("Upload failed:", err);
       showToast("Failed to upload audio. Please try again.", "error");
@@ -133,6 +162,7 @@ export default function MyMusic() {
         is_public: isPublic,
         audio_url: uploadedAudioUrl,
         object_key: uploadedObjectKey ?? undefined,
+        file_hash: uploadedFileHash ?? undefined,
       });
 
       showToast("Song created successfully", "success");
@@ -142,6 +172,7 @@ export default function MyMusic() {
       setAudioFile(null);
       setUploadedAudioUrl(null);
       setUploadedObjectKey(null);
+      setUploadedFileHash(null);
       setUploadProgress(null);
       setShowForm(false);
 
