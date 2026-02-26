@@ -152,9 +152,16 @@ def get_public_url(object_key: str) -> str:
 
 def get_file_url(object_key: str) -> str:
     """
-    URL to access the file. If S3_PUBLIC=True returns direct URL;
-    otherwise returns presigned GET URL (for private bucket / CloudFront later).
+    URL to access the file for playback.
+    - If CLOUDFRONT_URL is set: return CDN URL (no AWS credentials for GET; S3 stays private).
+    - Else if S3_PUBLIC=True: return direct S3 URL.
+    - Else: return presigned GET URL (private bucket, backward compat).
     """
+    base = getattr(settings, "CLOUDFRONT_URL", "").strip()
+    if base:
+        base = base.rstrip("/")
+        encoded_key = quote(object_key, safe="/")
+        return f"{base}/{encoded_key}"
     if getattr(settings, "S3_PUBLIC", False):
         return get_public_url(object_key)
     return generate_presigned_get_url(object_key)

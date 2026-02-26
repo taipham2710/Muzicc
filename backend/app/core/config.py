@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = ""  # Deprecated: kept only for local/dev overrides
     S3_BUCKET: str = ""
     S3_REGION: str = "ap-southeast-1"
-    S3_PUBLIC: bool = False  # True = direct URL; False = presigned GET (private bucket)
+    S3_PUBLIC: bool = False  # True = direct S3 URL; False = presigned GET or CloudFront
+    # CloudFront: when set, playback uses CDN URL (no presigned GET, S3 stays private)
+    CLOUDFRONT_URL: str = ""
 
     class Config:
         env_file = ".env"
