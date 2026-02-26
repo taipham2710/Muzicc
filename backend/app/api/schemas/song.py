@@ -16,10 +16,21 @@ class SongBase(BaseModel):
 S3_KEY_PATTERN = re.compile(r"^songs/[0-9a-f]{8}\.mp3$")
 
 
+def _validate_sha256(value: str | None) -> str | None:
+    """Basic validation for SHA256 hex string (64 chars)."""
+    if value is None or value == "":
+        return None
+    v = value.strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", v):
+        raise ValueError("file_hash must be a 64-char lowercase hex SHA256 string")
+    return v
+
+
 # Create (POST /songs)
 class SongCreate(SongBase):
     """object_key from getUploadUrl — required when creating after S3 upload (backend needs s3_key)."""
     object_key: str | None = None
+    file_hash: str | None = None
 
     @field_validator("object_key")
     @classmethod
@@ -29,6 +40,11 @@ class SongCreate(SongBase):
         if not S3_KEY_PATTERN.fullmatch(v):
             raise ValueError("object_key must match pattern 'songs/{8-hex}.mp3'")
         return v
+
+    @field_validator("file_hash")
+    @classmethod
+    def file_hash_must_be_sha256(cls, v: str | None) -> str | None:
+        return _validate_sha256(v)
 
 
 # Update (PATCH /songs/{id})
@@ -77,16 +93,42 @@ class ConfirmUploadRequest(BaseModel):
 ALLOWED_UPLOAD_CONTENT_TYPE = "audio/mpeg"
 
 
+class CheckFileRequest(BaseModel):
+    file_hash: str
+
+    @field_validator("file_hash")
+    @classmethod
+    def file_hash_must_be_sha256(cls, v: str) -> str:
+        out = _validate_sha256(v)
+        assert out is not None
+        return out
+
+
+class CheckFileResponse(BaseModel):
+    exists: bool
+    object_key: Optional[str] = None
+    file_url: Optional[str] = None
+
+
 # Upload URL request
 class UploadUrlRequest(BaseModel):
     filename: str
     content_type: str  # Must be "audio/mpeg"
+    file_hash: str
+
+    @field_validator("file_hash")
+    @classmethod
+    def file_hash_must_be_sha256(cls, v: str) -> str:
+        out = _validate_sha256(v)
+        assert out is not None
+        return out
 
 
 # Upload URL response (file_url/key for new clients; object_key/public_url for backward compat)
 class UploadUrlResponse(BaseModel):
-    upload_url: str
+    upload_url: Optional[str] = None
     file_url: str
     key: str
     object_key: str  # same as key
     public_url: str   # same as file_url
+    already_exists: bool = False

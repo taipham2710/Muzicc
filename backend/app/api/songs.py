@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.api.schemas.common import PaginatedResponse
 from app.api.schemas.song import (
     ALLOWED_UPLOAD_CONTENT_TYPE,
+    CheckFileRequest,
+    CheckFileResponse,
     ConfirmUploadRequest,
     SongCreate,
     SongResponse,
@@ -159,6 +161,53 @@ def get_song(
     return song_to_response(song)
 
 
+@router.post(
+    "/check-file",
+    response_model=CheckFileResponse,
+    status_code=status.HTTP_200_OK,
+)
+def check_file(
+    payload: CheckFileRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> CheckFileResponse:
+    """
+    Check if a file with the given SHA256 hash already exists.
+    If exists, return its S3 object_key and CloudFront URL so the client can reuse it.
+    """
+    song = (
+        db.query(Song)
+        .filter(
+            Song.file_hash == payload.file_hash,
+            Song.s3_key.isnot(None),
+        )
+        .order_by(Song.created_at.asc())
+        .first()
+    )
+    if not song:
+        return CheckFileResponse(exists=False)
+
+    try:
+        file_url = get_file_url(song.s3_key)
+    except Exception:
+        file_url = None
+
+    logger.info(
+        "check-file dedup hit",
+        extra={
+            "file_hash": payload.file_hash,
+            "s3_key": song.s3_key,
+            "song_id": song.id,
+            "user_id": current_user.id,
+        },
+    )
+    return CheckFileResponse(
+        exists=True,
+        object_key=song.s3_key,
+        file_url=file_url,
+    )
+
+
 # Auth – presigned URL for S3 upload (POST /songs/upload-url)
 @router.post(
     "/upload-url",
@@ -167,11 +216,13 @@ def get_song(
 )
 def get_upload_url(
     payload: UploadUrlRequest,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> UploadUrlResponse:
     """
     Generate presigned URL for uploading an audio file to S3.
     Only content_type "audio/mpeg" is allowed.
+    If a file with the same SHA256 hash already exists, reuse its S3 object.
     """
     if payload.content_type != ALLOWED_UPLOAD_CONTENT_TYPE:
         logger.warning(
@@ -187,6 +238,39 @@ def get_upload_url(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid filename",
+        )
+
+    # Deduplication: if a file with the same hash already exists, reuse its S3 object.
+    existing = (
+        db.query(Song)
+        .filter(
+            Song.file_hash == payload.file_hash,
+            Song.s3_key.isnot(None),
+        )
+        .order_by(Song.created_at.asc())
+        .first()
+    )
+    if existing:
+        try:
+            file_url = get_file_url(existing.s3_key)
+        except Exception:
+            file_url = ""
+        logger.info(
+            "upload-url dedup hit, reusing existing object",
+            extra={
+                "file_hash": payload.file_hash,
+                "s3_key": existing.s3_key,
+                "existing_song_id": existing.id,
+                "user_id": current_user.id,
+            },
+        )
+        return UploadUrlResponse(
+            upload_url=None,
+            file_url=file_url,
+            key=existing.s3_key,
+            object_key=existing.s3_key,
+            public_url=file_url,
+            already_exists=True,
         )
 
     object_key = build_s3_key(payload.filename)
@@ -208,9 +292,10 @@ def get_upload_url(
             key=object_key,
             object_key=object_key,
             public_url=file_url,
+            already_exists=False,
         )
     except ValueError as e:
-        logger.exception("Failed to generate upload URL for key=%s", object_key)
+        logger.exception("Failed to generate presigned upload URL for key=%s", object_key)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
@@ -319,12 +404,27 @@ def create_song(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Backend requires s3_key (NOT NULL). Get from object_key or parse from audio_url.
+    # Backend requires s3_key (NOT NULL). Prefer object_key, then parse from audio_url.
     s3_key = None
     if payload.object_key and _S3_KEY_RE.fullmatch(payload.object_key):
         s3_key = payload.object_key
     elif payload.audio_url:
         s3_key = _s3_key_from_audio_url(payload.audio_url)
+
+    # If file_hash is provided, try to reuse existing S3 object (dedup safety net).
+    if payload.file_hash:
+        existing = (
+            db.query(Song)
+            .filter(
+                Song.file_hash == payload.file_hash,
+                Song.s3_key.isnot(None),
+            )
+            .order_by(Song.created_at.asc())
+            .first()
+        )
+        if existing:
+            s3_key = existing.s3_key
+
     if not s3_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -334,6 +434,7 @@ def create_song(
         title=payload.title,
         artist=payload.artist,
         s3_key=s3_key,
+        file_hash=payload.file_hash,
         audio_url=payload.audio_url or "",
         is_public=payload.is_public,
         owner_id=current_user.id,

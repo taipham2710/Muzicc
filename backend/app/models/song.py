@@ -18,11 +18,18 @@ class Song(Base):
     # backfill existing rows where s3_key IS NULL.
     s3_key: Mapped[str] = mapped_column(
         String(512),
-        unique=True,
         nullable=False,
         index=True,
     )
     file_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+
+    # SHA256 hash of audio content (hex, 64 chars) for deduplication.
+    # Multiple Song rows may share the same file_hash (different owners/metadata).
+    file_hash: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
 
     audio_url: Mapped[str] = mapped_column(String(2048), nullable=False, default="")
 
