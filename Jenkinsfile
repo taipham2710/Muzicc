@@ -175,7 +175,7 @@ pipeline {
 
                     echo "[INFO] Upload frontend to S3..."
 
-                    aws s3 sync frontend/dist/ s3://muzicc-bucket/ --delete
+                    aws s3 sync frontend/dist/ s3://muzicc-bucket/frontend/ --delete
                 '''
             }
         }
