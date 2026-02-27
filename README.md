@@ -12,3 +12,4 @@ on AWS.
 - Phase 3: Docker & local integration
 - Phase 4: CI pipeline
 - Phase 5: Cloud deployment (AWS + EKS)
+- Phase 6: Test pipeline
