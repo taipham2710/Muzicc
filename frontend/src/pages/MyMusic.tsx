@@ -95,7 +95,7 @@ export default function MyMusic() {
     setUploadedObjectKey(null);
     setUploadedFileHash(null);
 
-    // Auto upload khi chọn file
+    // Auto upload when selecting file
     try {
       setIsUploading(true);
 
@@ -368,7 +368,7 @@ export default function MyMusic() {
               />
 
               <label style={formLabelStyle}>
-                Audio File <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(bắt buộc)</span>
+                Audio File <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(required)</span>
               </label>
               <div style={{ marginBottom: 12 }}>
                 <input
@@ -416,7 +416,7 @@ export default function MyMusic() {
                         overflow: "hidden",
                       }}
                     >
-                      {audioFile?.name || "Chưa chọn file"}
+                      {audioFile?.name || "No file selected"}
                     </div>
                     <div
                       style={{
@@ -425,7 +425,7 @@ export default function MyMusic() {
                         marginTop: 2,
                       }}
                     >
-                      Định dạng hỗ trợ: MP3, WAV, M4A &lt; 20MB
+                      Supported formats: MP3, WAV, M4A &lt; 20MB
                     </div>
                   </div>
                   <button
@@ -439,7 +439,7 @@ export default function MyMusic() {
                       }
                     }}
                   >
-                    Chọn file
+                    Select file
                   </button>
                 </div>
                 {isUploading && uploadProgress !== null && (
@@ -463,13 +463,13 @@ export default function MyMusic() {
                       />
                     </div>
                     <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-                      Đang tải lên... {uploadProgress}%
+                      Uploading... {uploadProgress}%
                     </div>
                   </div>
                 )}
                 {uploadedAudioUrl && !isUploading && (
                   <div style={{ fontSize: 12, color: "var(--primary)", marginTop: 6 }}>
-                    ✓ Đã tải audio lên
+                    ✓ Audio uploaded
                   </div>
                 )}
               </div>
@@ -491,7 +491,7 @@ export default function MyMusic() {
                   className="btn-primary"
                   style={{ padding: "10px 20px", fontSize: 14 }}
                 >
-                  {isUploading ? "Đang tải..." : "Tạo bài hát"}
+                  {isUploading ? "Uploading..." : "Create track"}
                 </button>
                 <button
                   type="button"
@@ -506,7 +506,7 @@ export default function MyMusic() {
                   className="btn-secondary"
                   style={{ padding: "10px 20px", fontSize: 14 }}
                 >
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </form>
@@ -529,14 +529,14 @@ export default function MyMusic() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="edit-modal-title" style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 600, color: "var(--text)" }}>
-              Chỉnh sửa bài hát
+              Edit track
             </h2>
             <label style={formLabelStyle}>Title</label>
             <input
               className="input-field"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Tên bài hát"
+              placeholder="Track title"
               style={{ ...formInputStyle, marginBottom: 16 }}
             />
             <label style={formLabelStyle}>Artist</label>
@@ -544,7 +544,7 @@ export default function MyMusic() {
               className="input-field"
               value={editArtist}
               onChange={(e) => setEditArtist(e.target.value)}
-              placeholder="Ca sĩ"
+              placeholder="Artist name"
               style={{ ...formInputStyle, marginBottom: 16 }}
             />
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
@@ -566,12 +566,12 @@ export default function MyMusic() {
                       artist: editArtist,
                       is_public: editPublic,
                     });
-                    showToast("Đã cập nhật bài hát", "success");
+                    showToast("Track updated successfully", "success");
                     setEditingId(null);
                     loadSongs();
                   } catch (err) {
                     console.error("Update song failed:", err);
-                    showToast("Cập nhật thất bại. Thử lại sau.", "error");
+                    showToast("Update failed. Please try again later.", "error");
                   } finally {
                     setSavingId(null);
                   }
@@ -580,7 +580,7 @@ export default function MyMusic() {
                 className="btn-primary"
                 style={{ padding: "10px 20px", fontSize: 14 }}
               >
-                {savingId === editingId ? "Đang lưu..." : "Lưu"}
+                {savingId === editingId ? "Saving..." : "Save"}
               </button>
               <button
                 type="button"
@@ -589,7 +589,7 @@ export default function MyMusic() {
                 className="btn-secondary"
                 style={{ padding: "10px 20px", fontSize: 14 }}
               >
-                Hủy
+                Cancel
               </button>
             </div>
           </div>
@@ -627,7 +627,7 @@ export default function MyMusic() {
             <span style={{ gridColumn: 2 }}>Title</span>
             <span style={{ gridColumn: 3 }}>Artist</span>
             <span style={{ gridColumn: 4 }}>Status</span>
-            <span style={{ gridColumn: 5 }}>Thao tác</span>
+            <span style={{ gridColumn: 5 }}>Actions</span>
           </div>
           <ul className="song-list">
             {(songs?.items ?? []).map((song) => (
@@ -672,7 +672,7 @@ export default function MyMusic() {
 
       {!loading && loadError && (
         <p style={{ color: "#666", fontSize: 14, marginTop: 8 }}>
-          Chưa có dữ liệu. Sửa lỗi kết nối rồi bấm Thử lại.
+          No data. Please fix the connection error and click Try again.
         </p>
       )}
 
