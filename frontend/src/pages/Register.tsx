@@ -57,7 +57,7 @@ export default function Register() {
         (err as { response?: unknown }).response == null;
 
       if (isNetworkError || hasNoResponse) {
-        setError("Không thể kết nối server. Kiểm tra backend đã chạy chưa (port 8000).");
+        setError("Unable to connect to the server. Please run the backend (port 8000) and reload the page.");
       } else {
         const msg =
           err && typeof err === "object" && "response" in err
@@ -67,7 +67,7 @@ export default function Register() {
         setError(
           msg && typeof msg === "string"
             ? msg
-            : "Đăng ký thất bại. Email có thể đã được sử dụng."
+            : "Registration failed. The email may already be in use."
         );
       }
     } finally {
@@ -79,11 +79,11 @@ export default function Register() {
     <div style={formStyle}>
       <h1 className="page-title" style={{ fontSize: "1.75rem" }}>Sign up</h1>
       <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 28 }}>
-        Tạo tài khoản để upload và quản lý bài hát.
+        Create an account to upload and manage your tracks.
       </p>
 
       <form onSubmit={handleSubmit}>
-        <label style={labelStyle} htmlFor="register-email">Email</label>
+        <label style={labelStyle} htmlFor="register-email">Email address</label>
         <input
           id="register-email"
           type="email"
@@ -96,7 +96,7 @@ export default function Register() {
           style={inputStyle}
         />
 
-        <label style={labelStyle} htmlFor="register-password">Mật khẩu</label>
+        <label style={labelStyle} htmlFor="register-password">Password</label>
         <input
           id="register-password"
           type="password"
@@ -114,12 +114,12 @@ export default function Register() {
         )}
 
         <button type="submit" disabled={loading} className="btn-primary" style={{ width: "100%", padding: 12, fontSize: 15 }}>
-          {loading ? "Đang đăng ký..." : "Sign up"}
+          {loading ? "Registering..." : "Sign up"}
         </button>
       </form>
 
       <p style={{ marginTop: 24, fontSize: 14, color: "var(--text-secondary)" }}>
-        Đã có tài khoản?{" "}
+        Already have an account?{" "}
         <Link to="/login" style={{ color: "var(--primary)", fontWeight: 500 }}>Sign in</Link>
       </p>
     </div>

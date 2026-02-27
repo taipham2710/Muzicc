@@ -29,9 +29,9 @@ export default function Home() {
       setTotal(data.total);
     } catch (err) {
       if (isNetworkError(err)) {
-        setLoadError("Không thể kết nối server. Hãy chạy backend (port 8000) rồi tải lại trang.");
+        setLoadError("Unable to connect to the server. Please run the backend (port 8000) and reload the page.");
       } else {
-        setLoadError("Không tải được danh sách bài hát. Thử lại sau.");
+        setLoadError("Unable to load the song list. Please try again later.");
       }
     } finally {
       setLoading(false);
@@ -57,15 +57,15 @@ export default function Home() {
           <input
             type="search"
             className="input-field"
-            placeholder="Tìm theo tên bài hát..."
+            placeholder="Search tracks by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Tìm bài hát"
+            aria-label="Search public tracks"
           />
         </div>
         <div className="search-actions">
           <button type="submit" className="btn-primary">
-            Tìm kiếm
+            Search
           </button>
           {searchSubmitted && (
             <button
@@ -73,7 +73,7 @@ export default function Home() {
               className="btn-secondary"
               onClick={() => { setSearchQuery(""); setSearchSubmitted(""); setOffset(0); }}
             >
-              Xóa bộ lọc
+              Clear filters
             </button>
           )}
         </div>
@@ -83,7 +83,7 @@ export default function Home() {
         <div className="error-banner">
           <span style={{ flex: 1 }}>{loadError}</span>
           <button type="button" onClick={() => loadSongs()} className="btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>
-            Thử lại
+            Try again
           </button>
         </div>
       )}
@@ -137,7 +137,7 @@ export default function Home() {
       )}
 
       {!loading && loadError && (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Chưa có dữ liệu. Sửa lỗi kết nối rồi bấm Thử lại.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>No data. Please fix the connection error and click Try again.</p>
       )}
 
       <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>

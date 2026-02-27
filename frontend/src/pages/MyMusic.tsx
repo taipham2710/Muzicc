@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   fetchMySongs,
   createSong,
@@ -35,6 +35,7 @@ export default function MyMusic() {
   const [uploadedObjectKey, setUploadedObjectKey] = useState<string | null>(null);
   const [uploadedFileHash, setUploadedFileHash] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // edit
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -63,9 +64,9 @@ export default function MyMusic() {
       setTotal(data.total);
     } catch (err) {
       if (isNetworkError(err)) {
-        setLoadError("Không thể kết nối server. Hãy chạy backend (port 8000) rồi tải lại trang.");
+        setLoadError("Unable to connect to the server. Please run the backend (port 8000) and reload the page.");
       } else {
-        setLoadError("Không tải được danh sách. Thử lại sau.");
+        setLoadError("Unable to load the song list. Please try again later.");
       }
     } finally {
       setLoading(false);
@@ -208,12 +209,13 @@ export default function MyMusic() {
     padding: 24,
   };
   const modalCard: React.CSSProperties = {
-    backgroundColor: "var(--bg-card)",
+    background:
+      "radial-gradient(circle at top left, rgba(29,185,84,0.12), transparent 55%), var(--bg-card)",
     border: "1px solid var(--border)",
-    borderRadius: "var(--radius-md)",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+    borderRadius: "var(--radius-lg)",
+    boxShadow: "0 24px 70px rgba(0,0,0,0.55)",
     width: "100%",
-    maxWidth: 420,
+    maxWidth: 460,
     maxHeight: "90vh",
     overflowY: "auto",
     padding: 24,
@@ -227,7 +229,7 @@ export default function MyMusic() {
         <div className="error-banner">
           <span style={{ flex: 1 }}>{loadError}</span>
           <button type="button" onClick={() => loadSongs()} className="btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>
-            Thử lại
+            Try again
           </button>
         </div>
       )}
@@ -237,15 +239,15 @@ export default function MyMusic() {
           <input
             type="search"
             className="input-field"
-            placeholder="Tìm theo tên bài hát hoặc nghệ sĩ..."
+            placeholder="Search tracks by name or artist..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Tìm bài hát"
+            aria-label="Search tracks"
           />
         </div>
         <div className="search-actions">
           <button type="submit" className="btn-primary">
-            Tìm kiếm
+            Search
           </button>
           {searchSubmitted && (
             <button
@@ -253,7 +255,7 @@ export default function MyMusic() {
               className="btn-secondary"
               onClick={() => { setSearchQuery(""); setSearchSubmitted(""); setOffset(0); }}
             >
-              Xóa bộ lọc
+              Clear filters
             </button>
           )}
         </div>
@@ -265,7 +267,7 @@ export default function MyMusic() {
         className="btn-primary"
         style={{ padding: "10px 18px", fontSize: 14 }}
       >
-        + Upload more
+        + Upload more tracks
       </button>
 
       {showForm && (
@@ -284,15 +286,67 @@ export default function MyMusic() {
             }
           }}
         >
-          <div
-            style={modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="upload-modal-title" style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 600, color: "var(--text)" }}>
-              Thêm bài hát
-            </h2>
+          <div style={modalCard} onClick={(e) => e.stopPropagation()}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 18,
+              }}
+            >
+              <div>
+                <h2
+                  id="upload-modal-title"
+                  style={{
+                    margin: 0,
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: "var(--text)",
+                  }}
+                >
+                  Add a track
+                </h2>
+                <p
+                  style={{
+                    marginTop: 6,
+                    marginBottom: 0,
+                    fontSize: 13,
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Enter basic information and upload your audio file.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isUploading) return;
+                  setShowForm(false);
+                  setAudioFile(null);
+                  setUploadedAudioUrl(null);
+                  setUploadedObjectKey(null);
+                  setUploadProgress(null);
+                }}
+                aria-label="Close"
+                className="btn-secondary"
+                style={{
+                  width: 32,
+                  height: 32,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "999px",
+                  fontSize: 16,
+                }}
+              >
+                ×
+              </button>
+            </div>
             <form onSubmit={handleSubmit}>
-              <label style={formLabelStyle}>Title (bắt buộc)</label>
+              <label style={formLabelStyle}>Title (required)</label>
               <input
                 required
                 value={title}
@@ -300,17 +354,17 @@ export default function MyMusic() {
                 disabled={isUploading}
                 className="input-field"
                 style={formInputStyle}
-                placeholder="Tên bài hát"
+                placeholder="Track title"
               />
 
-              <label style={formLabelStyle}>Artist (tùy chọn)</label>
+              <label style={formLabelStyle}>Artist (optional)</label>
               <input
                 value={artist}
                 onChange={(e) => setArtist(e.target.value)}
                 disabled={isUploading}
                 className="input-field"
                 style={formInputStyle}
-                placeholder="Ca sĩ"
+                placeholder="Artist name"
               />
 
               <label style={formLabelStyle}>
@@ -318,17 +372,76 @@ export default function MyMusic() {
               </label>
               <div style={{ marginBottom: 12 }}>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="audio/*"
                   onChange={handleFileChange}
                   disabled={isUploading}
-                  style={{ fontSize: 14 }}
+                  style={{ display: "none" }}
                 />
-                {audioFile && !uploadedAudioUrl && !isUploading && (
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
-                    Đã chọn: {audioFile.name}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px dashed var(--border)",
+                    backgroundColor: "rgba(15,15,15,0.9)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 10,
+                      background:
+                        "linear-gradient(135deg, rgba(29,185,84,0.25), rgba(29,185,84,0.05))",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontSize: 18,
+                    }}
+                  >
+                    ♪
                   </div>
-                )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        color: "var(--text)",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {audioFile?.name || "Chưa chọn file"}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--text-muted)",
+                        marginTop: 2,
+                      }}
+                    >
+                      Định dạng hỗ trợ: MP3, WAV, M4A &lt; 20MB
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={isUploading}
+                    style={{ padding: "8px 12px", fontSize: 13 }}
+                    onClick={() => {
+                      if (!isUploading) {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                  >
+                    Chọn file
+                  </button>
+                </div>
                 {isUploading && uploadProgress !== null && (
                   <div style={{ marginTop: 10 }}>
                     <div
@@ -371,7 +484,7 @@ export default function MyMusic() {
                 <span style={{ fontSize: 14 }}>Public</span>
               </label>
 
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
                 <button
                   type="submit"
                   disabled={isUploading || !uploadedAudioUrl || loading}

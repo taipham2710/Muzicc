@@ -57,13 +57,34 @@ export default function SongItem({
             backgroundColor: isCurrentSong ? "var(--primary)" : "var(--bg-surface)",
             color: "#fff",
             cursor: disablePlay || !song.audio_url ? "not-allowed" : "pointer",
-            fontSize: 18,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {isCurrentlyPlaying ? "⏸" : "▶"}
+          {isCurrentlyPlaying ? (
+            <svg
+              width={18}
+              height={18}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor" />
+              <rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg
+              width={18}
+              height={18}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <polygon
+                points="7,5 19,12 7,19"
+                fill="currentColor"
+              />
+            </svg>
+          )}
         </button>
       </div>
 
@@ -102,7 +123,17 @@ export default function SongItem({
               style={actionButtonStyle}
               title="Edit"
             >
-              ✏️
+              <svg
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M15.728 4.272a2.5 2.5 0 0 1 3.536 3.536l-9.193 9.193a2 2 0 0 1-.94.53l-3.51.877a.75.75 0 0 1-.91-.91l.877-3.51a2 2 0 0 1 .53-.94l9.193-9.193Z"
+                  fill="currentColor"
+                />
+              </svg>
             </button>
             <button
               type="button"
@@ -112,7 +143,17 @@ export default function SongItem({
               style={actionButtonStyle}
               title="Delete"
             >
-              🗑
+              <svg
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M9 3.5A1.5 1.5 0 0 1 10.5 2h3A1.5 1.5 0 0 1 15 3.5V5h4a1 1 0 1 1 0 2h-1.1l-1.01 11.116A2.5 2.5 0 0 1 14.4 20.5H9.6a2.5 2.5 0 0 1-2.49-2.384L6.1 7H5a1 1 0 1 1 0-2h4V3.5ZM8.11 7l.9 10h5.98l.9-10H8.11Z"
+                  fill="currentColor"
+                />
+              </svg>
             </button>
           </>
         ) : null}

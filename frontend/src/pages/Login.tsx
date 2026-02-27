@@ -58,9 +58,9 @@ export default function Login() {
         (err as { response?: unknown }).response == null;
 
       if (isNetworkError || hasNoResponse) {
-        setError("Không thể kết nối server. Kiểm tra backend đã chạy chưa (port 8000).");
+        setError("Unable to connect to the server. Please run the backend (port 8000) and reload the page.");
       } else {
-        setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
+        setError("Invalid email or password. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -71,11 +71,11 @@ export default function Login() {
     <div style={formStyle}>
       <h1 className="page-title" style={{ fontSize: "1.75rem" }}>Sign in</h1>
       <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 28 }}>
-        Đăng nhập để nghe nhạc và quản lý bài hát của bạn.
+        Sign in to listen to music and manage your tracks.
       </p>
 
       <form onSubmit={handleSubmit}>
-        <label style={labelStyle} htmlFor="login-email">Email</label>
+        <label style={labelStyle} htmlFor="login-email">Email address</label>
         <input
           id="login-email"
           type="email"
@@ -88,7 +88,7 @@ export default function Login() {
           style={inputStyle}
         />
 
-        <label style={labelStyle} htmlFor="login-password">Mật khẩu</label>
+        <label style={labelStyle} htmlFor="login-password">Password</label>
         <input
           id="login-password"
           type="password"
@@ -106,12 +106,12 @@ export default function Login() {
         )}
 
         <button type="submit" disabled={loading} className="btn-primary" style={{ width: "100%", padding: 12, fontSize: 15 }}>
-          {loading ? "Đang đăng nhập..." : "Sign in"}
+          {loading ? "Logging in..." : "Sign in"}
         </button>
       </form>
 
       <p style={{ marginTop: 24, fontSize: 14, color: "var(--text-secondary)" }}>
-        Chưa có tài khoản?{" "}
+        Don't have an account?{" "}
         <Link to="/register" style={{ color: "var(--primary)", fontWeight: 500 }}>Sign up</Link>
       </p>
     </div>

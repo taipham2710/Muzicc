@@ -27,10 +27,10 @@ export default function Landing() {
     } catch (err) {
       if (isNetworkError(err)) {
         setLoadError(
-          "Không thể kết nối server. Hãy chạy backend (port 8000) rồi tải lại trang."
+          "Unable to connect to the server. Please run the backend (port 8000) and reload the page."
         );
       } else {
-        setLoadError("Không tải được danh sách bài hát. Thử lại sau.");
+        setLoadError("Unable to load the song list. Please try again later.");
       }
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export default function Landing() {
               margin: "0 0 12px 0",
             }}
           >
-            Thư viện nhạc không quảng cáo
+            Music library without ads
           </h1>
           <p
             style={{
@@ -104,8 +104,7 @@ export default function Landing() {
               color: "rgba(255,255,255,0.82)",
             }}
           >
-            Nghe thử ngay những bản nhạc chất lượng cao, sau đó đăng ký tài
-            khoản để tạo playlist riêng và upload track của bạn.
+            Listen to high-quality songs now, then register an account to create a private playlist and upload your tracks.
           </p>
 
           {/* SEARCH HERO */}
@@ -133,8 +132,8 @@ export default function Landing() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm tracks theo tên..."
-                aria-label="Tìm bài hát public"
+                placeholder="Search tracks by name..."
+                aria-label="Search public tracks"
                 style={{
                   flex: 1,
                   border: "none",
@@ -155,7 +154,7 @@ export default function Landing() {
                   whiteSpace: "nowrap",
                 }}
               >
-                Tìm kiếm
+                Search
               </button>
             </div>
           </form>
@@ -175,7 +174,7 @@ export default function Landing() {
                 className="btn-primary"
                 style={{ padding: "10px 20px", fontSize: 14 }}
               >
-                Dùng thử miễn phí
+                Try for free
               </button>
             </Link>
             <Link to="/login">
@@ -189,7 +188,7 @@ export default function Landing() {
                   color: "#fff",
                 }}
               >
-                Đăng nhập
+                Sign in
               </button>
             </Link>
           </div>
@@ -204,7 +203,7 @@ export default function Landing() {
           className="page-title"
           style={{ fontSize: "1.25rem", marginBottom: 12 }}
         >
-          Nghe thử — Public songs
+          Try — Public songs
         </h2>
         <p
           style={{
@@ -213,8 +212,8 @@ export default function Landing() {
             marginBottom: 20,
           }}
         >
-          Đây là {LANDING_SONGS_LIMIT} bài nhạc mới nhất. Bấm
-          nút play để nghe thử ngay ở thanh player bên dưới.
+          These are the latest {LANDING_SONGS_LIMIT} songs. Click
+          the play button to listen to them in the player below.
         </p>
 
         {loadError && (
@@ -226,7 +225,7 @@ export default function Landing() {
               className="btn-primary"
               style={{ padding: "6px 14px", fontSize: 13 }}
             >
-              Thử lại
+              Try again
             </button>
           </div>
         )}
@@ -284,8 +283,7 @@ export default function Landing() {
                   fontSize: 14,
                 }}
               >
-                Chưa có bài hát công khai. Đăng ký tài khoản và upload bài của
-                bạn nhé.
+                No public songs. Register an account and upload your tracks.
               </p>
             )}
           </div>
@@ -293,7 +291,7 @@ export default function Landing() {
 
         {!loading && loadError && (
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-            Chưa có dữ liệu. Sửa lỗi kết nối rồi bấm Thử lại.
+            No data. Please fix the connection error and click Try again.
           </p>
         )}
       </section>
@@ -315,25 +313,20 @@ export default function Landing() {
             fontWeight: 600,
           }}
         >
-          Muzicc – Thư viện nhạc của riêng bạn
+          Muzicc – Your music library
         </h3>
         <p style={{ margin: "0 0 8px" }}>
-          Chúng tôi hiểu cảm giác đó: nhạc tải về ngày càng nhiều, nhưng khi
-          cần lại không nhớ bài nào ở đâu, bài nào đang dùng, và bài nào có thể
-          phát ngay.
+          We understand how it feels: you download more and more music, but when you need it, you can't remember where it is, what you're using, and what you can play right away.
         </p>
         <p style={{ margin: "0 0 8px" }}>
-          Muzicc ra đời từ chính nhu cầu đó. Một nơi duy nhất để bạn upload,
-          quản lý và phát lại toàn bộ thư viện nhạc cá nhân – đơn giản, nhanh và
-          gọn.
+          Muzicc was born from that need. A single place to upload, manage, and play back your entire personal music library – simple, fast, and clean.
         </p>
         <p style={{ margin: 0 }}>
-          Không cố gắng thay thế các nền tảng lớn. Muzicc chỉ tập trung làm một
-          việc: giúp âm nhạc của bạn luôn sẵn sàng khi bạn cần.
+          We're not trying to replace big platforms. Muzicc just focuses on one thing: helping your music always be ready when you need it.
         </p>
       </section>
 
-      {/* Chỉ Thông tin liên hệ nằm trong vùng màu khác, nội dung căn giữa */}
+      {/* Contact information section is in a different color area, centered content */}
       <section style={{ marginTop: 24 }}>
         <div
           style={{
@@ -353,7 +346,7 @@ export default function Landing() {
               textAlign: "center",
             }}
           >
-            Contact information
+            Contact Information
           </h4>
           <div
             style={{

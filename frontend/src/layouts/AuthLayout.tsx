@@ -90,11 +90,31 @@ export default function AuthLayout() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 18,
             }}
             aria-label="Account menu"
           >
-            👤
+            <svg
+              width={20}
+              height={20}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                cx="12"
+                cy="8"
+                r="3.4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+              <path
+                d="M6.2 18.2C7.3 15.9 9.5 14.4 12 14.4s4.7 1.5 5.8 3.8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
 
           {dropdownOpen && (
