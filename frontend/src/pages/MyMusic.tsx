@@ -18,7 +18,7 @@ export default function MyMusic() {
   const showToast = useToastStore((state) => state.show);
   const [songs, setSongs] = useState<PaginatedSongs | null>(null);
   const [total, setTotal] = useState(0);
-  const [limit] = useState(20);
+  const [limit] = useState(10);
   const [offset, setOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSubmitted, setSearchSubmitted] = useState("");

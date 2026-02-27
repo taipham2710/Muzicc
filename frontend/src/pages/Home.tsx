@@ -4,7 +4,7 @@ import SongItem from "../components/SongItem";
 import { isNetworkError } from "../utils/error";
 import type { PaginatedSongs } from "../types/song";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export default function Home() {
   const [songs, setSongs] = useState<PaginatedSongs | null>(null);
