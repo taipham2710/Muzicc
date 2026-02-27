@@ -15,7 +15,7 @@ pipeline {
 
         // Tên image backend, image frontend (phần repo, không gồm registry)
         BACKEND_IMAGE = "muzicc-backend"
-        FRONTEND_IMAGE = "muzicc-frontend"
+        //FRONTEND_IMAGE = "muzicc-frontend"
 
         // URL SonarQube – nên cấu hình bằng biến môi trường của Jenkins
         SONAR_HOST    = "http://172.31.28.215:9000"
@@ -74,7 +74,7 @@ pipeline {
             }
         }
 
-        stage('Prepare Tags') {
+        stage('Prepare Tags for Backend') {
             steps {
                 script {
                     def shortCommit = sh(
@@ -88,29 +88,26 @@ pipeline {
         }
 
 
-        stage('Docker Build') {
+        stage('Docker Build for Backend') {
             steps {
                 sh '''
                     set -euo pipefail
                     docker build -t "${BACKEND_IMAGE}:${IMAGE_TAG}" ./backend
-                    docker build -t "${FRONTEND_IMAGE}:${IMAGE_TAG}" ./frontend
                 '''
             }
         }
 
-        stage('Trivy Image Scan') {
+        stage('Trivy Image Scan for Backend') {
             steps {
                 sh '''
                     set -euo pipefail
                     trivy image --severity HIGH,CRITICAL --exit-code 1 \
                         "${BACKEND_IMAGE}:${IMAGE_TAG}"
-                    trivy image --severity HIGH,CRITICAL --exit-code 1 \
-                        "${FRONTEND_IMAGE}:${IMAGE_TAG}"
                 '''
             }
         }
 
-        stage('OPA Policy Check') {
+        stage('OPA Policy Check for Backend') {
             steps {
                 sh '''
                     set -euo pipefail
@@ -133,12 +130,11 @@ pipeline {
                     }
 
                     check_policy "${BACKEND_IMAGE}:${IMAGE_TAG}"
-                    check_policy "${FRONTEND_IMAGE}:${IMAGE_TAG}"
                 '''
             }
         }
 
-        stage('Push to ECR') {
+        stage('Push to ECR for Backend') {
             steps {
                 sh '''
                     set -euo pipefail
@@ -152,12 +148,44 @@ pipeline {
                         "${ECR_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}"
 
                     docker push "${ECR_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}"
+                '''
+            }
+        }
 
-                    # Tag & push image frontend
-                    docker tag "${FRONTEND_IMAGE}:${IMAGE_TAG}" \
-                        "${ECR_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}"
+        stage('Build Frontend (Static)') {
+            steps {
+                sh '''
+                    set -euo pipefail
 
-                    docker push "${ECR_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}"
+                    echo "[INFO] Build frontend static files..."
+
+                    docker run --rm \
+                    -v "$WORKSPACE/frontend:/app" \
+                    -w /app \
+                    node:22-alpine \
+                    sh -c "npm ci && npm run build"
+                '''
+            }
+        }
+
+        stage('Upload Frontend to S3') {
+            steps {
+                sh '''
+                    set -euo pipefail
+
+                    echo "[INFO] Upload frontend to S3..."
+
+                    aws s3 sync frontend/dist/ s3://muzicc-bucket/frontend/ --delete
+                '''
+            }
+        }
+
+        stage('Invalidate CloudFront Cache') {
+            steps {
+                sh '''
+                    aws cloudfront create-invalidation \
+                    --distribution-id E27ZNU3U3SZM2R \
+                    --paths "/*"
                 '''
             }
         }
