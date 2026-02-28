@@ -194,18 +194,85 @@ pipeline {
     post {
         always {
             script {
-                notifySlack("BUILD ${BUILD_NUMBER} finished with status: ${currentBuild.currentResult}")
+                def status = currentBuild.currentResult ?: 'UNKNOWN'
+                def stageName = currentBuild.currentBuild?.stages?.last()?.name ?: 'Pipeline'
+                def message = "Build #${env.BUILD_NUMBER} finished with status: ${status}"
+                notifySlack(status, stageName, message)
             }
         }
     }
 }
 
-def notifySlack(message) {
+def notifySlack(status, stageName, message) {
+    def color = status == "SUCCESS" ? "#2eb886" : "#e01e5a"
+    // Escape for JSON: backslash and double-quote
+    def safe = { s -> (s ?: '').replaceAll('\\\\', '\\\\\\\\').replaceAll('"', '\\\\"').replaceAll('\n', '\\\\n').replaceAll('\r', '') }
+
     withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
         sh """
-            curl -X POST -H 'Content-type: application/json' \
-                 --data '{"text":"${message}"}' \
-                 ${SLACK_WEBHOOK}
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{
+          "attachments": [
+            {
+              "color": "${color}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Jenkins Pipeline: ${safe(status)}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job:* ${safe(env.JOB_NAME)}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build:* #${env.BUILD_NUMBER}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Stage:* ${safe(stageName)}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:* ${safe(status)}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${safe(message)}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Build"
+                      },
+                      "url": "${env.BUILD_URL}"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }' "\${SLACK_WEBHOOK}"
         """
     }
 }
