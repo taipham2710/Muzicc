@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { Song } from "../types/song";
 import { useAudioStore } from "../stores/audio.store";
+import { useToastStore } from "../stores/toast.store";
 
 type Props = {
   song: Song;
@@ -7,6 +9,7 @@ type Props = {
   disablePlay?: boolean;
   disableActions?: boolean;
   showActions?: boolean;
+  showDownload?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 };
@@ -17,9 +20,12 @@ export default function SongItem({
   disablePlay = false,
   disableActions = false,
   showActions = false,
+  showDownload = false,
   onEdit,
   onDelete,
 }: Props) {
+  const showToast = useToastStore((s) => s.show);
+  const [downloading, setDownloading] = useState(false);
   const { currentSong, isPlaying, progress, play, pause } = useAudioStore();
   const isCurrentSong = currentSong?.id === song.id;
   const isCurrentlyPlaying = isCurrentSong && isPlaying;
@@ -30,6 +36,31 @@ export default function SongItem({
       pause();
     } else {
       play(song, queue);
+    }
+  }
+
+  async function handleDownload() {
+    if (!song.audio_url || downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(song.audio_url, { mode: "cors" });
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const ext = song.audio_url.split(/[#?]/)[0]?.split(".").pop()?.toLowerCase() || "mp3";
+      a.download = `${(song.title || "track").replace(/[/\\?%*:|"<>]/g, "-")}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Download started", "success");
+    } catch (err) {
+      console.error("Download failed:", err);
+      showToast("Download failed. Try again.", "error");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -113,6 +144,38 @@ export default function SongItem({
       </div>
 
       <div className="song-cell-actions" style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+        {showDownload && song.audio_url && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="action-btn"
+            style={actionButtonStyle}
+            title="Download"
+          >
+            <svg
+              width={16}
+              height={16}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2v14.5m0 0 4.5-4.5M12 16.5 7.5 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M4 20h16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
         {showActions ? (
           <>
             <button

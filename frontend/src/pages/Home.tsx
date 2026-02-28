@@ -132,7 +132,7 @@ export default function Home() {
             <span style={{ gridColumn: 2 }}>Title</span>
             <span style={{ gridColumn: 3 }}>Artist</span>
             <span style={{ gridColumn: 4 }}>Status</span>
-            <span style={{ gridColumn: 5 }} />
+            <span style={{ gridColumn: 5 }}>Download</span>
           </div>
           <ul className="song-list">
             {(songs?.items ?? []).map((song) => (
@@ -141,6 +141,7 @@ export default function Home() {
                 song={song}
                 queue={songs?.items ?? []}
                 disablePlay={false}
+                showDownload={true}
               />
             ))}
           </ul>
