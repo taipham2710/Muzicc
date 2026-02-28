@@ -24,7 +24,8 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --transition: 0.15s ease;
+  --transition: 0.2s ease;
+  --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -43,7 +44,7 @@ body {
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition), transform 0.1s ease;
+  transition: background var(--transition-smooth), transform 0.18s ease;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover) !important;
@@ -63,7 +64,10 @@ body {
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  transition: background var(--transition-smooth), border-color var(--transition-smooth), color var(--transition-smooth), transform 0.15s ease;
+}
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
 }
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-surface) !important;
@@ -103,7 +107,7 @@ body {
 
 /* Play button in song item */
 .play-btn-circle {
-  transition: background var(--transition), transform 0.1s ease;
+  transition: background var(--transition-smooth), transform 0.18s ease;
 }
 .play-btn-circle:hover:not(:disabled) {
   transform: scale(1.05);
@@ -114,7 +118,7 @@ body {
 
 /* Action buttons (edit/delete) */
 .action-btn {
-  transition: background var(--transition), transform 0.1s ease;
+  transition: background var(--transition-smooth), transform 0.18s ease;
 }
 .action-btn:hover:not(:disabled) {
   background: #333 !important;
@@ -126,7 +130,7 @@ body {
 
 /* Nav link hover */
 .nav-link {
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition-smooth), color var(--transition-smooth), border-left var(--transition-smooth), font-weight 0.2s ease;
 }
 .nav-link:hover {
   background: var(--bg-surface) !important;
@@ -144,7 +148,7 @@ body {
   transform: scale(1.02);
 }
 .avatar-btn {
-  transition: background var(--transition), transform 0.1s ease;
+  transition: background var(--transition-smooth), transform 0.18s ease;
 }
 
 /* Pagination buttons */
@@ -154,7 +158,10 @@ body {
   border-color: var(--border) !important;
 }
 .pagination-btn {
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  transition: background var(--transition-smooth), color var(--transition-smooth), border-color var(--transition-smooth), transform 0.15s ease;
+}
+.pagination-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 /* Page title */
@@ -282,4 +289,19 @@ body {
 }
 .song-table-wrap .song-list .song-item-card .song-row-progress {
   grid-column: 1 / -1;
+}
+
+/* ---------- Page transition (chuyển trang mượt) ---------- */
+.page-transition {
+  animation: pageEnter 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -218,7 +218,9 @@ export default function AuthLayout() {
             backgroundColor: "var(--bg-base)",
           }}
         >
-          <Outlet />
+          <div key={location.pathname} className="page-transition" style={{ minHeight: "100%" }}>
+            <Outlet />
+          </div>
         </main>
       </div>
 
