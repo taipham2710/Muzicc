@@ -133,6 +133,78 @@ export default function GlobalAudioPlayer() {
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
+  const renderVolumeIcon = () => {
+    if (volume === 0) {
+      // Muted
+      return (
+        <svg
+          width={18}
+          height={18}
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M5 9v6h3.2L13 18.8V5.2L8.2 9H5Z"
+            fill="currentColor"
+          />
+          <path
+            d="M16 9l4 4m0-4-4 4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    }
+
+    if (volume < 0.5) {
+      // Low volume
+      return (
+        <svg
+          width={18}
+          height={18}
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M5 9v6h3.2L13 18.8V5.2L8.2 9H5Z"
+            fill="currentColor"
+          />
+          <path
+            d="M16 12c0-1.1-.5-2.1-1.3-2.8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    }
+
+    // High volume
+    return (
+      <svg
+        width={18}
+        height={18}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M5 9v6h3.2L13 18.8V5.2L8.2 9H5Z"
+          fill="currentColor"
+        />
+        <path
+          d="M16 12c0-1.1-.5-2.1-1.3-2.8M18.5 7.5C19.8 8.7 20.6 10.3 20.6 12s-.8 3.3-2.1 4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  };
+
   if (!currentSong) return null;
 
   return (
@@ -217,7 +289,25 @@ export default function GlobalAudioPlayer() {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 120px" }}>
-        <span style={{ fontSize: 14 }} title="Volume">🔊</span>
+        <button
+          type="button"
+          title="Volume"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            border: "none",
+            backgroundColor: "transparent",
+            color: "var(--text-secondary)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "default",
+            padding: 0,
+          }}
+        >
+          {renderVolumeIcon()}
+        </button>
         <input
           type="range"
           min={0}
