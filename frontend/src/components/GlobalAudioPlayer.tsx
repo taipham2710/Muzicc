@@ -245,13 +245,34 @@ export default function GlobalAudioPlayer() {
           backgroundColor: "var(--primary)",
           color: "#fff",
           cursor: "pointer",
-          fontSize: 18,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        {isPlaying ? "⏸" : "▶"}
+        {isPlaying ? (
+          <svg
+            width={18}
+            height={18}
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor" />
+            <rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor" />
+          </svg>
+        ) : (
+          <svg
+            width={18}
+            height={18}
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <polygon
+              points="7,5 19,12 7,19"
+              fill="currentColor"
+            />
+          </svg>
+        )}
       </button>
 
       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
