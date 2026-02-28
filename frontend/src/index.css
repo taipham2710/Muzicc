@@ -233,6 +233,11 @@ body {
 .song-table-wrap {
   width: 100%;
   overflow-x: auto;
+  transition: opacity var(--transition-smooth), transform var(--transition-smooth);
+}
+.song-table-wrap.is-fetching {
+  opacity: 0.7;
+  transform: translateY(2px);
 }
 .song-table-header {
   display: grid;

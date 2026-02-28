@@ -14,6 +14,7 @@ export default function Home() {
   const [searchSubmitted, setSearchSubmitted] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const hasSongs = (songs?.items?.length ?? 0) > 0;
 
   async function loadSongs() {
     setLoadError(null);
@@ -47,6 +48,13 @@ export default function Home() {
     setSearchSubmitted(searchQuery);
     setOffset(0);
   }
+
+  const scrollMainToTop = () => {
+    const el = document.querySelector("main");
+    if (el && "scrollTo" in el) {
+      (el as HTMLElement).scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <div>
@@ -88,7 +96,7 @@ export default function Home() {
         </div>
       )}
 
-      {loading && (
+      {loading && !songs && (
         <ul className="song-list">
           {Array.from({ length: 5 }).map((_, idx) => (
             <li key={idx} style={{ marginBottom: 12 }}>
@@ -114,8 +122,11 @@ export default function Home() {
         </ul>
       )}
 
-      {!loading && !loadError && (
-        <div className="song-table-wrap">
+      {!loadError && songs && (
+        <div
+          key={songs.offset}
+          className={`song-table-wrap ${loading ? "is-fetching" : ""}`}
+        >
           <div className="song-table-header" role="row">
             <span style={{ gridColumn: 1 }}>Play</span>
             <span style={{ gridColumn: 2 }}>Title</span>
@@ -129,10 +140,15 @@ export default function Home() {
                 key={song.id}
                 song={song}
                 queue={songs?.items ?? []}
-                disablePlay={loading}
+                disablePlay={false}
               />
             ))}
           </ul>
+          {!hasSongs && !loading && (
+            <p style={{ padding: "24px 18px", color: "var(--text-muted)", fontSize: 14 }}>
+              No public songs.
+            </p>
+          )}
         </div>
       )}
 
@@ -144,8 +160,11 @@ export default function Home() {
         <button
           type="button"
           className="pagination-btn btn-secondary"
-          disabled={offset === 0}
-          onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+          disabled={loading || offset === 0}
+          onClick={() => {
+            setOffset(Math.max(0, offset - PAGE_SIZE));
+            scrollMainToTop();
+          }}
           style={{ padding: "8px 16px", fontSize: 14 }}
         >
           ◀ Prev
@@ -156,8 +175,11 @@ export default function Home() {
         <button
           type="button"
           className="pagination-btn btn-secondary"
-          disabled={offset + PAGE_SIZE >= total}
-          onClick={() => setOffset(offset + PAGE_SIZE)}
+          disabled={loading || offset + PAGE_SIZE >= total}
+          onClick={() => {
+            setOffset(offset + PAGE_SIZE);
+            scrollMainToTop();
+          }}
           style={{ padding: "8px 16px", fontSize: 14 }}
         >
           Next ▶

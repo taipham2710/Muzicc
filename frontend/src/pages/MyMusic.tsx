@@ -23,6 +23,7 @@ export default function MyMusic() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSubmitted, setSearchSubmitted] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isFetchingPage, setIsFetchingPage] = useState(false);
 
   // create
   const [showForm, setShowForm] = useState(false);
@@ -53,7 +54,8 @@ export default function MyMusic() {
   async function loadSongs() {
     setLoadError(null);
     try {
-      setLoading(true);
+      if (songs) setIsFetchingPage(true);
+      else setLoading(true);
       const data = await fetchMySongs(
         limit,
         offset,
@@ -70,6 +72,7 @@ export default function MyMusic() {
       }
     } finally {
       setLoading(false);
+      setIsFetchingPage(false);
     }
   }
 
@@ -596,7 +599,7 @@ export default function MyMusic() {
         </div>
       )}
 
-      {loading && !loadError ? (
+      {loading && !songs && !loadError ? (
         <ul className="song-list">
           {Array.from({ length: 5 }).map((_, idx) => (
             <li key={idx} style={{ marginBottom: 12 }}>
@@ -620,8 +623,11 @@ export default function MyMusic() {
             </li>
           ))}
         </ul>
-      ) : !loadError ? (
-        <div className="song-table-wrap">
+      ) : !loadError && songs ? (
+        <div
+          key={songs.offset}
+          className={`song-table-wrap ${isFetchingPage ? "is-fetching" : ""}`}
+        >
           <div className="song-table-header" role="row">
             <span style={{ gridColumn: 1 }}>Play</span>
             <span style={{ gridColumn: 2 }}>Title</span>
@@ -635,7 +641,7 @@ export default function MyMusic() {
                 key={song.id}
                 song={song}
                 queue={songs?.items ?? []}
-                disablePlay={loading}
+                disablePlay={false}
                 disableActions={
                   savingId === song.id || deletingId === song.id
                 }
@@ -681,6 +687,7 @@ export default function MyMusic() {
         limit={limit}
         offset={offset}
         onChange={setOffset}
+        disabled={loading || isFetchingPage}
       />
     </div>
   );
