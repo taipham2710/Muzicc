@@ -195,7 +195,7 @@ pipeline {
         always {
             script {
                 def status = currentBuild.currentResult ?: 'UNKNOWN'
-                def stageName = currentBuild.currentBuild?.stages?.last()?.name ?: 'Pipeline'
+                def stageName = 'Pipeline'
                 def message = "Build #${env.BUILD_NUMBER} finished with status: ${status}"
                 notifySlack(status, stageName, message)
             }
